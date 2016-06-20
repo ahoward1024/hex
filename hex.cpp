@@ -13,6 +13,8 @@
 #include "colors.h"
 #include "timer.h"
 
+#include "resource.h"
+
 global bool Global_running = true;
 global bool Global_paused = true;
 global int Window_Width  = 1920;
@@ -577,6 +579,11 @@ int main(int argc, char **argv)
 		printf("%s\n", SDL_GetError());
 		return -1;
 	}
+	IMG_Init(0);
+	SDL_RWops *rwop;
+	rwop = SDL_RWFromFile("../res/hex.ico", "rb");
+	SDL_Surface *icon = IMG_LoadICO_RW(rwop);
+	SDL_SetWindowIcon(window, icon);
 	SDL_Surface *surface = SDL_GetWindowSurface(window);
 	SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
 
@@ -703,6 +710,7 @@ int main(int argc, char **argv)
 		startClock = SDL_GetTicks();
 	} while(Global_running);
 
+	IMG_Quit();
 	TTF_CloseFont(fontConsolas24);
 	Mix_CloseAudio();
 	SDL_FreeSurface(surface);
