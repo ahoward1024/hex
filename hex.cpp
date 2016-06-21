@@ -25,6 +25,7 @@ global int LENGTH = 9;
 const global int INCREMENT = 8;
 global bool CLEAR = true;
 global int REFRATE = 1;
+global int VOLUME = SDL_MIX_MAXVOLUME;
 
 struct Point
 {
@@ -62,6 +63,19 @@ struct RectList
 	Rect *rects;
 	int   size;
 };
+
+inline void clear(SDL_Renderer *renderer, uint32 color)
+{
+	uint8 *c = (uint8 *)&color;
+	SDL_SetRenderDrawColor(renderer, c[0], c[1], c[2], c[3]);
+	SDL_RenderClear(renderer);
+}
+
+inline void clear(SDL_Renderer *renderer)
+{
+	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
+	SDL_RenderClear(renderer);
+}
 
 void setPixel(SDL_Surface *surface, const int32 x, const int32 y, const uint32 color)
 {
@@ -357,8 +371,96 @@ void BouncingSquares(SDL_Surface *surface, RectList rectList)
 	}
 }
 
-void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, uint32 *color1, uint32 *color2,
-                  Point *hexList, int hexAmount, Point mid, Timer *timer)
+/* set this to any of 512,1024,2048,4096              */
+/* the lower it is, the more FPS shown and CPU needed */
+#define BUFFER 1024
+#define W 1920 /* NEVER make this be less than BUFFER! */
+#define H 1080
+#define H2 (H/2)
+#define H4 (H/4)
+#define Y(sample) (((sample)*H)/4/0x7fff)
+
+Sint16 stream[2][BUFFER*2*2];
+int len=BUFFER*2*2, done=0, need_refresh=0, bits=0, which=0,
+	sample_size=0, position=0, rate=0;
+Uint32 black,white;
+float dy;
+
+static void postmix(void *udata, Uint8 *_stream, int _len)
+{
+	SDL_Surface *s = (SDL_Surface *)udata;
+	position+=_len/sample_size;
+	/* fprintf(stderr,"pos=%7.2f seconds \r",position/(float)rate); */
+	if(need_refresh)
+		return;
+	/* save the stream buffer and indicate that we need a redraw */
+	len=_len;
+	memcpy(stream[(which+1)%2],_stream,len>s->w*4?s->w*4:len);
+	which=(which+1)%2;
+	need_refresh=1;
+}
+
+int colorClamp(int value)
+{
+	if(value > 255) return 255;
+	if(value < 0) return 0;
+	else return value;
+}
+
+// Adapted from: http://jcatki.no-ip.org:8080/SDL_mixer/demos/sdlwav.c
+void posNegWaveform(SDL_Surface *s, uint8 alpha)
+{
+	int x;
+	Sint16 *buf;
+
+	/*fprintf(stderr,"len=%d   \r",len); */
+
+	buf=stream[which];
+	need_refresh=0;
+	
+	SDL_LockSurface(s);
+
+	/* draw the wav from the saved stream buffer */
+	for(x=0;x<W*2;x++)
+	{
+		const int X=x>>1, b=x&1 ,t=H4+H2*b;
+		int y1,h1;
+		if(buf[x]<0)
+		{
+			h1=-Y(buf[x]);
+			y1=t-h1;
+		}
+		else
+		{
+			y1=t;
+			h1=Y(buf[x]);
+		}
+		{
+			SDL_Rect r={X,H2*b,1};
+			r.h=y1-r.y;
+			SDL_FillRect(s,&r, 0x1c1c1c1c);
+		}
+		{
+			SDL_Rect r={X,y1,1,h1};
+			uint8 red = colorClamp(r.h * 2);
+			uint8 green = colorClamp((r.h * 4) % 2);
+			uint8 blue = colorClamp(r.h << 4);
+			uint32 color = (alpha << 24) | (red << 16) | (green << 8) | (blue << 0);
+			SDL_FillRect(s,&r,color);
+		}
+		{
+			SDL_Rect r={X,y1+h1,1};
+			r.h=H2+H2*b-r.y;
+			SDL_FillRect(s,&r, 0x1c1c1c1c);
+		}
+	}
+
+	SDL_UnlockSurface(s);
+}
+
+void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, SDL_Surface *surface, 
+                  uint32 *color1, uint32 *color2,Point *hexList, int hexAmount, 
+                  Point mid, Timer *timer, Mix_Music *music)
 {
 	SDL_Event event;
 	if(SDL_PollEvent(&event))
@@ -369,6 +471,27 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, uint32 *color1, ui
 			{
 				Global_running = false;
 			} break;
+			case SDL_MOUSEWHEEL:
+			{
+				switch(event.wheel.type)
+				{
+					case SDL_MOUSEWHEEL:
+					{
+						int amount;
+						if(event.wheel.y > 0) amount = 16;
+						else amount = -16;
+						if(VOLUME < SDL_MIX_MAXVOLUME)
+						{
+							VOLUME += amount;
+						}
+						else if(VOLUME > 0)
+						{
+							VOLUME += amount;
+						}
+						Mix_VolumeMusic(VOLUME);
+					} break;
+				}
+			}
 			case SDL_KEYDOWN:
 			{
 				SDL_Keycode key = event.key.keysym.sym;
@@ -420,6 +543,12 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, uint32 *color1, ui
 						if(timer->_bound == 1) timer->_bound = 500;
 						else timer->_bound = 1;
 					} break;
+					case SDLK_RIGHT:
+					{
+					} break;
+					case SDLK_LEFT:
+					{
+					} break;
 				}
 			}
 			case SDL_WINDOWEVENT:
@@ -434,93 +563,6 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, uint32 *color1, ui
 			} break;
 		}
 	}
-}
-
-/* set this to any of 512,1024,2048,4096              */
-/* the lower it is, the more FPS shown and CPU needed */
-#define BUFFER 1024
-#define W 1920 /* NEVER make this be less than BUFFER! */
-#define H 1080
-#define H2 (H/2)
-#define H4 (H/4)
-#define Y(sample) (((sample)*H)/4/0x7fff)
-
-Sint16 stream[2][BUFFER*2*2];
-int len=BUFFER*2*2, done=0, need_refresh=0, bits=0, which=0,
-	sample_size=0, position=0, rate=0;
-Uint32 flips=0;
-Uint32 black,white;
-float dy;
-
-static void postmix(void *udata, Uint8 *_stream, int _len)
-{
-	SDL_Surface *s = (SDL_Surface *)udata;
-	position+=_len/sample_size;
-	/* fprintf(stderr,"pos=%7.2f seconds \r",position/(float)rate); */
-	if(need_refresh)
-		return;
-	/* save the stream buffer and indicate that we need a redraw */
-	len=_len;
-	memcpy(stream[(which+1)%2],_stream,len>s->w*4?s->w*4:len);
-	which=(which+1)%2;
-	need_refresh=1;
-}
-
-int clamp(int value)
-{
-	if(value > 255) return 255;
-	if(value < 0) return 0;
-	else return value;
-}
-
-void refresh(SDL_Surface *s)
-{
-	int x;
-	Sint16 *buf;
-
-	/*fprintf(stderr,"len=%d   \r",len); */
-
-	buf=stream[which];
-	need_refresh=0;
-	
-	SDL_LockSurface(s);
-
-	/* draw the wav from the saved stream buffer */
-	for(x=0;x<W*2;x++)
-	{
-		const int X=x>>1, b=x&1 ,t=H4+H2*b;
-		int y1,h1;
-		if(buf[x]<0)
-		{
-			h1=-Y(buf[x]);
-			y1=t-h1;
-		}
-		else
-		{
-			y1=t;
-			h1=Y(buf[x]);
-		}
-		{
-			SDL_Rect r={X,H2*b,1};
-			r.h=y1-r.y;
-			SDL_FillRect(s,&r, 0x1c1c1c1c);
-		}
-		{
-			SDL_Rect r={X,y1,1,h1};
-			uint8 red = clamp(r.h * 2);
-			uint8 green = clamp((r.h * 4) % 2);
-			uint8 blue = clamp(r.h << 4);
-			uint32 color = (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
-			SDL_FillRect(s,&r,color);
-		}
-		{
-			SDL_Rect r={X,y1+h1,1};
-			r.h=H2+H2*b-r.y;
-			SDL_FillRect(s,&r, 0x1c1c1c1c);
-		}
-	}
-	SDL_UnlockSurface(s);
-	flips++;
 }
 
 int main(int argc, char **argv)
@@ -552,7 +594,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	Mix_VolumeMusic(SDL_MIX_MAXVOLUME);
+	Mix_VolumeMusic(VOLUME);
 
 	if(Mix_PlayMusic(music, 1) == -1)
 	{
@@ -566,7 +608,6 @@ int main(int argc, char **argv)
 	int bits = audio_format & 0xFF;
 	sample_size = bits / 8 + audio_channels;
 	rate = audio_rate;
-
 
 	uint32 windowFlags = 0;
 	// windowFlags |= SDL_WINDOW_FULLSCREEN;
@@ -657,17 +698,15 @@ int main(int argc, char **argv)
 	uint64 startClock = SDL_GetTicks();
 	do
 	{
-		HandleEvents(renderer, window, &color1, &color2, hexList, hexAmount, mid, &ref);
-		#if 0
-		if(CLEAR)
-		{
-			SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
-			SDL_RenderClear(renderer);
-		}
+		HandleEvents(renderer, window, wavSurface, &color1, &color2, hexList, hexAmount, 
+		             mid, &ref, music);
+		#if 1
+		if(CLEAR) clear(renderer);
 		#endif
 
-		if(TickTimer(&ref)) refresh(wavSurface);
+		// if(TickTimer(&ref)) refresh(wavSurface);
 
+		#if 1
 		if(TickTimer(&gen))
 		{
 			Point start = mid;
@@ -678,30 +717,32 @@ int main(int argc, char **argv)
 				start = hexList[i];
 			}
 		}
+		#endif
 
+		#if 1
 		// Draw random hex grid
 		for (int i = 0; i < hexAmount; ++i)
 		{
-			DrawHexToSurface(surface, hexList[i], 9, createRandomColor());
+			DrawHexToSurface(surface, hexList[i], 9, 0xFFFFFFFF);
 		}
-
-		#if 0
-		BouncingSquares(surface, rlist);
-		PulsingHexes(renderer, surface, plist);
-		
-		
 		#endif
 
+		// BouncingSquares(surface, rlist);
+		// PulsingHexes(renderer, surface, plist);
+
+		posNegWaveform(wavSurface, 0xFF);
+		SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_MOD);
+		SDL_BlitSurface(wavSurface, NULL, surface, NULL);
+
+		posNegWaveform(wavSurface, 0x1C);
+		SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_ADD);
 		SDL_BlitSurface(wavSurface, NULL, surface, NULL);
 		
 		SDL_UpdateWindowSurface(window);
 
 		uint64 ms = SDL_GetTicks() - startClock;
 		// Delay the clock until 8 ms are up. This should make the screen render at 125 fps max.
-		while(ms < 8)
-		{
-			ms = SDL_GetTicks() - startClock;
-		}
+		while(ms < 1) { ms = SDL_GetTicks() - startClock; }
 		uint64 fps = 0;
 		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
 		char wtextBuffer[128];
