@@ -21,8 +21,8 @@
 
 global bool Global_running = true;
 global bool Global_paused = true;
-global int Window_Width  = 1920;
-global int Window_Height = 1080;
+global int Window_Width  = 1280;
+global int Window_Height = 720;
 global bool FLIP = false;
 global bool UP = false;
 global int LENGTH = 9;
@@ -200,8 +200,8 @@ int colorClamp(int value)
 /* set this to any of 512,1024,2048,4096              */
 /* the lower it is, the more FPS shown and CPU needed */
 #define BUFFER 1024
-#define W 1920 /* NEVER make this be less than BUFFER! */
-#define H 1080
+#define W Window_Width /* NEVER make this be less than BUFFER! */
+#define H Window_Height
 #define H2 (H/2)
 #define H4 (H/4)
 #define Y(sample) (((sample)*H)/4/0x7FFF)
@@ -209,6 +209,7 @@ int colorClamp(int value)
 Sint16 stream[2][BUFFER*2*2];
 int len = BUFFER * 2 * 2, done = 0, bits = 0, which = 0, sample_size = 0, position = 0, rate = 0;
 float dy;
+int mmax = 0;
 
 static void postmix(void *udata, Uint8 *_stream, int _len)
 {
@@ -221,7 +222,7 @@ static void postmix(void *udata, Uint8 *_stream, int _len)
 	which = (which + 1) % 2;
 }
 
-void posNegWaveform(SDL_Surface *s, uint8 alpha)
+void posNegWaveform(SDL_Surface *s, uint8 alpha, TTF_Font *font)
 {
 	int x;
 	Sint16 *buf;
@@ -235,6 +236,8 @@ void posNegWaveform(SDL_Surface *s, uint8 alpha)
 	/* draw the wav from the saved stream buffer */
 	SDL_Rect r;
 	SDL_FillRect(s, NULL, 0x00000000);
+	int max = 0;
+	#if 1
 	for(x = 0; x < (W * 2); x++)
 	{
 		const int X = x >> 1, b = x & 1, t = H4 + H2 * b;
@@ -242,6 +245,7 @@ void posNegWaveform(SDL_Surface *s, uint8 alpha)
 		int top = 10;
 		if(buf[x] < 0)
 		{
+			if(-buf[x] > max) max = -buf[x];
 			h1 = -Y(buf[x]);
 			y1 = t - h1;
 
@@ -255,6 +259,7 @@ void posNegWaveform(SDL_Surface *s, uint8 alpha)
 		}
 		else
 		{
+			if(buf[x] > max) max = buf[x];
 			y1 = t;
 			h1 = Y(buf[x]);
 
@@ -299,6 +304,26 @@ void posNegWaveform(SDL_Surface *s, uint8 alpha)
 			uint32 color = (alpha << 24) | (red << 16) | (green << 8) | (blue << 0);
 			SDL_FillRect(s, &r, color);
 		}
+		#endif
+	}
+	#endif
+	{
+		#if 1
+		int y = (max)*Window_Height/0x7FFF;
+		SDL_Rect peak = { Window_Width / 2 - 5, Window_Height - y, 10, y };
+		uint8 red = colorClamp(y * 2);
+		uint8 blue = colorClamp(y << 2);
+		uint8 green = colorClamp(y - (255));
+		uint32 color = (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
+		SDL_FillRect(s, &peak, color);
+		if(max > mmax) mmax = max;
+		y = (mmax)*Window_Height/0x7FFF;
+		peak = { Window_Width / 2 - 5, Window_Height - y, 10, 3 };
+		SDL_FillRect(s, &peak, 0xFFFF0000);
+		char num[32];
+		sprintf(num, "%d", mmax);
+		SDL_Color white = { 255, 255, 255, 255 };
+		DrawTextToSurface(s, 40, 40, "Hello", font, white);
 		#endif
 	}
 	SDL_UnlockSurface(s);
@@ -673,7 +698,7 @@ int main(int argc, char **argv)
 	                                              0x0000FF00,
 	                                              0x000000FF,
 	                                              0xFF000000);
-	SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_MOD);
+	SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_NONE);
 
 	if(!renderer)
 	{
@@ -777,7 +802,7 @@ int main(int argc, char **argv)
 		}
 		#endif
 
-		#if 1
+		#if 0
 		// Draw random hex grid
 		for (int i = 0; i < hexList.size; ++i)
 		{
@@ -793,11 +818,11 @@ int main(int argc, char **argv)
 		#endif
 		if(DELAY)
 		{
-			if(TickTimer(&gen)) posNegWaveform(wavSurface, 0xFF);
+			if(TickTimer(&gen)) posNegWaveform(wavSurface, 0xFF, fontConsolas24);
 		}
 		else
 		{
-			posNegWaveform(wavSurface, 0xFF);
+			posNegWaveform(wavSurface, 0xFF, fontConsolas24);
 		}
 
 		// BouncingSquares(surface, rlist);
