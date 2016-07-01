@@ -307,26 +307,29 @@ void posNegWaveform(SDL_Surface *s, uint8 alpha, TTF_Font *font)
 		#endif
 	}
 	#endif
+	int y = 0;
 	{
 		#if 1
-		int y = (max)*Window_Height/0x7FFF;
-		SDL_Rect peak = { Window_Width / 2 - 5, Window_Height - y, 10, y };
-		uint8 red = colorClamp(y * 2);
-		uint8 blue = colorClamp(y << 2);
-		uint8 green = colorClamp(y - (255));
+		y = (max)*Window_Height/0x7FFF;
+		SDL_Rect peak = { Window_Width / 2 - 10, Window_Height - y - 5, 20, y };
+		SDL_FillRect(s, &peak, 0xFF000000);
+		peak = { Window_Width / 2 - 5, Window_Height - y, 10, y };
+		uint8 red = colorClamp(0x00);
+		uint8 blue = colorClamp(0x00);
+		uint8 green = colorClamp(y);
 		uint32 color = (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
 		SDL_FillRect(s, &peak, color);
 		if(max > mmax) mmax = max;
 		y = (mmax)*Window_Height/0x7FFF;
 		peak = { Window_Width / 2 - 5, Window_Height - y, 10, 3 };
 		SDL_FillRect(s, &peak, 0xFFFF0000);
-		char num[32];
-		sprintf(num, "%d", mmax);
-		SDL_Color white = { 255, 255, 255, 255 };
-		DrawTextToSurface(s, 40, 40, "Hello", font, white);
 		#endif
 	}
 	SDL_UnlockSurface(s);
+	char num[32];
+	sprintf(num, "%d", mmax);
+	SDL_Color white = { 255, 255, 255, 255 };
+	DrawTextToSurface(s, Window_Width / 2 + 10, Window_Height - y - 10, num, font, white);
 }
 // <<< Adapted from: http://jcatki.no-ip.org:8080/SDL_mixer/demos/sdlwav.c
 
@@ -429,7 +432,8 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window,
 						SDL_BlendMode bm;
 						SDL_GetSurfaceBlendMode(wavSurface, &bm);
 						if(bm == SDL_BLENDMODE_BLEND) SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_MOD);
-						else if(bm == SDL_BLENDMODE_NONE) SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_MOD);
+						else if(bm == SDL_BLENDMODE_NONE) SDL_SetSurfaceBlendMode(wavSurface, 
+						                                                          SDL_BLENDMODE_MOD);
 						else SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_BLEND);
 					} break;
 					case SDLK_n:
@@ -504,40 +508,40 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window,
 // http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
 struct WAVFile
 {
-	FILE   *file;
-	char   *filename;
+	FILE    *file;
+	char    *filename;
 	// HEADER
-	uint8   riff[4];
-	uint32  overallSize;
-	uint8   wave[4];
-	uint8   fmtChunk[4];
-	uint32  fmtLength;
-	uint32  fmtType;
-	uint32  channels;
-	uint32  sampleRate;
-	uint32  byteRate;
-	uint32  blockAlign;
-	uint32  bitsPerSample;
-	uint8   data[4];
-	uint32  dataSize;
+	uint8    riff[4];
+	uint32   overallSize;
+	uint8    wave[4];
+	uint8    fmtChunk[4];
+	uint32   fmtLength;
+	uint32   fmtType;
+	uint32   channels;
+	uint32   sampleRate;
+	uint32   byteRate;
+	uint32   blockAlign;
+	uint32   bitsPerSample;
+	uint8    data[4];
+	uint32   dataSize;
 	// END HEADER
-	uint64  numSamples;
-	uint64  sampleSize;
-	float64 duration;
+	uint64   numSamples;
+	uint64   sampleSize;
+	float64  duration;
 };
 
-const char *getWAVFormatType(uint32 fmtType)
+inline const char *getWAVFormatType(uint32 fmtType)
 {
 	switch(fmtType)
 	{
-		case 1: return "PCM"; break;
-		case 6: return "A-law"; break;
-		case 7: return "Mu-law"; break;
-		default: return "Unknown";
+		case  1:  return "PCM";     break;
+		case  6:  return "A-law";   break;
+		case  7:  return "Mu-law";  break;
+		default:  return "Unknown"; break;
 	}
 }
 
-void printWAVFile(WAVFile wav)
+inline void printWAVFile(WAVFile wav)
 {
 	printf("WAVFile: %s\n", wav.filename);
 	printf("\t%c%c%c%c\n", wav.riff[0], wav.riff[1], wav.riff[2], wav.riff[3]);
@@ -615,7 +619,7 @@ WAVFile openWAVFile(const char *filename)
 	return wav;
 }
 
-void closeWAVFile(WAVFile wav)
+inline void closeWAVFile(WAVFile wav)
 {
 	fclose(wav.file);
 	free(wav.filename);
@@ -646,6 +650,7 @@ int main(int argc, char **argv)
 	const char *musicFileName = "../res/res.wav";
 	WAVFile wavFile = openWAVFile(musicFileName);
 	printWAVFile(wavFile);
+	closeWAVFile(wavFile);
 
 	Mix_Music *music = Mix_LoadMUS(musicFileName);
 	if(!music)
@@ -836,6 +841,15 @@ int main(int argc, char **argv)
 		while(ms < 33) { ms = SDL_GetTicks() - startClock; }
 		uint64 fps = 0;
 		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
+		if(fps < 30)
+		{
+			time_t rawtime;
+			struct tm *timeinfo;
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+			printf("Below 30 fps:\n%s%.4f Seconds in\n\n", asctime(timeinfo),
+			       (float)SDL_GetTicks() / 1000.0f);
+		}
 		char wtextBuffer[128];
 		sprintf(wtextBuffer, "Hex: ms/f: %llu, fps: %llu, %s, %s", ms, fps, 
 		        (CLEAR ? "CLEAR" : "NOCLEAR"), getBlendMode(wavSurface));
