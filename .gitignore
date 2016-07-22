@@ -15,7 +15,3 @@
 *.db
 \.vs
 \Debug
-
-# My nonsense
-*.sublime-project
-*.sublime-workspace
