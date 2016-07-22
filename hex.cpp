@@ -528,6 +528,8 @@ struct WAVFile
 	uint64   numSamples;
 	uint64   sampleSize;
 	float64  duration;
+	int16   *stream;
+	float64 *fStream;
 };
 
 inline const char *getWAVFormatType(uint32 fmtType)
@@ -610,6 +612,26 @@ WAVFile openWAVFile(const char *filename)
 		wav.sampleSize = (wav.channels * wav.bitsPerSample) /  8;
 
 		wav.duration = (float64)wav.overallSize / wav.byteRate;
+
+		wav.stream = (int16 *)malloc(wav.numSamples * sizeof(int16));
+		fread(wav.stream, wav.numSamples, 1, wav.file);
+		int16 max = 0;
+		for(int i = 0; i < wav.numSamples; ++i)
+		{
+			if(wav.stream[i] > max) max = wav.stream[i];
+		}
+		wav.fStream = (float64 *)calloc(wav.numSamples, sizeof(float64));
+		printf("Max: %d\n", max);
+		float64 maxx = (float64)max;
+		printf("FMax: %.6f\n", maxx);
+		for(int i = 0; i < wav.numSamples; ++i)
+		{
+			int16 sample = wav.stream[i];
+			if(sample < 0) sample = -sample;
+			float64 fsample = (float64)sample;
+			wav.fStream[i] = (100.0f - fsample) / (maxx - fsample); // TODO(alex): SO this
+		}
+		int i = 0;
 	}
 	else
 	{
@@ -623,6 +645,7 @@ inline void closeWAVFile(WAVFile wav)
 {
 	fclose(wav.file);
 	free(wav.filename);
+	free(wav.stream);
 }
 
 int main(int argc, char **argv)
@@ -650,7 +673,6 @@ int main(int argc, char **argv)
 	const char *musicFileName = "../res/res.wav";
 	WAVFile wavFile = openWAVFile(musicFileName);
 	printWAVFile(wavFile);
-	closeWAVFile(wavFile);
 
 	Mix_Music *music = Mix_LoadMUS(musicFileName);
 	if(!music)
@@ -863,6 +885,8 @@ int main(int argc, char **argv)
 	SDL_FreeSurface(surface);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
+	closeWAVFile(wavFile);
+
 
 	printf("Goodbye.\n");
 
