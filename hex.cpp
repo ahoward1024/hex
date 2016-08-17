@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include <float.h>
 
 #include "SDL/SDL.h"
 #include "SDL/SDL_framerate.h"
@@ -23,6 +24,11 @@ global bool Global_running = true;
 global bool Global_paused = true;
 global int Window_Width  = 1280;
 global int Window_Height = 720;
+global int Half_WW = Window_Width / 2;
+global int Fourth_WW = Window_Width / 4;
+global int Half_WH = Window_Height / 2;
+global int Fourth_WH = Window_Height / 4;
+global int BORDER = 10;
 global bool FLIP = false;
 global bool UP = false;
 global int LENGTH = 9;
@@ -499,8 +505,8 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window,
   memset(decimalpart, ' ', sizeof(decimalpart));
   strncpy(decimalpart, &hms[ipos+1], 3);
   milliseconds = atoi(decimalpart);
-   
-  sprintf(hms, "%d:%d:%d.%d", hours, minutes, seconds, milliseconds);
+  
+  sprintf(hms, "%d:%02d:%02d.%d", hours, minutes, seconds, milliseconds);
   return hms;
 }
 
@@ -511,9 +517,10 @@ struct WAVFile
 	FILE    *file;
 	char    *filename;
 	// HEADER
-	uint8    riff[4];
+	uint8    riffChunk[4];
 	uint32   overallSize;
 	uint8    wave[4];
+	// FORMAT CHUNK
 	uint8    fmtChunk[4];
 	uint32   fmtLength;
 	uint32   fmtType;
@@ -522,14 +529,17 @@ struct WAVFile
 	uint32   byteRate;
 	uint32   blockAlign;
 	uint32   bitsPerSample;
-	uint8    data[4];
+	// DATA CHUNK
+	uint8    dataChunk[4];
 	uint32   dataSize;
-	// END HEADER
+	// COUNTS
 	uint64   numSamples;
 	uint64   sampleSize;
 	float64  duration;
-	int16   *stream;
-	float64 *fStream;
+	int16    maxSample;
+	int16 	 minSample;
+	// STREAM
+	int16   *data;
 };
 
 inline const char *getWAVFormatType(uint32 fmtType)
@@ -545,24 +555,30 @@ inline const char *getWAVFormatType(uint32 fmtType)
 
 inline void printWAVFile(WAVFile wav)
 {
-	printf("WAVFile: %s\n", wav.filename);
-	printf("\t%c%c%c%c\n", wav.riff[0], wav.riff[1], wav.riff[2], wav.riff[3]);
-	printf("\tSize in bytes: %d\n", wav.overallSize);
-	printf("\tFormat: %c%c%c%c%c%c%c%c\n", wav.wave[0], wav.wave[1], wav.wave[2], wav.wave[3],
-	       wav.fmtChunk[0], wav.fmtChunk[1], wav.fmtChunk[2], wav.fmtChunk[3]);
-	printf("\tFormat length: %d\n", wav.fmtLength);
-	printf("\tFormat type: %s\n", getWAVFormatType(wav.fmtType));
-	printf("\tChannels: %d\n", wav.channels);
-	printf("\tSample rate: %d\n", wav.sampleRate);
-	printf("\tByte rate: %d\n", wav.byteRate);
-	printf("\tBlock align: %d\n", wav.blockAlign);
-	printf("\tBits per sample: %d\n", wav.bitsPerSample);
-	printf("\tData: %c%c%c%c\n", wav.data[0], wav.data[1], wav.data[2], wav.data[3]);
-	printf("\tData size: %d\n", wav.dataSize);
-	printf("\tNumber of samples: %d\n", wav.numSamples);
-	printf("\tSample size: %d\n", wav.sampleSize);
-	printf("\tDuration in seconds: %.4f\n", wav.duration);
-	printf("\tDuration in time: %s\n", seconds_to_time(wav.duration));
+	printf("<\nWAVFile: %s\n", wav.filename);
+	printf("HEADER:\n");
+		printf("\t%c%c%c%c\n", wav.riffChunk[0], wav.riffChunk[1], wav.riffChunk[2], wav.riffChunk[3]);
+		printf("\tSize in bytes: %d\n", wav.overallSize);
+		printf("\t%c%c%c%c\n", wav.wave[0], wav.wave[1], wav.wave[2], wav.wave[3]);
+	printf("FORMAT CHUNK:\n");
+		printf("\t%c%c%c%c\n", wav.fmtChunk[0], wav.fmtChunk[1], wav.fmtChunk[2], wav.fmtChunk[3]);
+		printf("\tFormat length: %d\n", wav.fmtLength);
+		printf("\tFormat type: %s\n", getWAVFormatType(wav.fmtType));
+		printf("\tChannels: %d\n", wav.channels);
+		printf("\tSample rate: %d\n", wav.sampleRate);
+		printf("\tByte rate: %d\n", wav.byteRate);
+		printf("\tBlock align: %d\n", wav.blockAlign);
+		printf("\tBits per sample: %d\n", wav.bitsPerSample);
+	printf("DATA CHUNK:\n");
+		printf("\t%c%c%c%c\n", wav.dataChunk[0], wav.dataChunk[1], wav.dataChunk[2], wav.dataChunk[3]);
+		printf("\tData size: %d\n", wav.dataSize);
+	printf("COUNTS:\n");
+		printf("\tNumber of samples: %d\n", wav.numSamples);
+		printf("\tSample size: %d\n", wav.sampleSize);
+		printf("\tDuration in seconds: %.4f\n", wav.duration);
+		printf("\tDuration in time: %s\n", seconds_to_time(wav.duration));
+		printf("\tMax sample: %d\n", wav.maxSample);
+	printf(">\n\n");
 }
 
 inline uint32 littleToBig2(uint8 buffer[2])
@@ -585,7 +601,7 @@ WAVFile openWAVFile(const char *filename)
 		uint8 buffer2[2];
 		wav.filename = (char *)malloc(strlen(filename) * sizeof(char));
 		strcpy(wav.filename, filename);
-		fread(wav.riff, 4, 1, wav.file);
+		fread(wav.riffChunk, 4, 1, wav.file);
 		fread(buffer4, 4, 1, wav.file);
 		wav.overallSize = littleToBig4(buffer4);
 		fread(wav.wave, 4, 1,  wav.file);
@@ -604,7 +620,7 @@ WAVFile openWAVFile(const char *filename)
 		wav.blockAlign = littleToBig2(buffer2);
 		fread(buffer2, 2, 1, wav.file);
 		wav.bitsPerSample = littleToBig2(buffer2);
-		fread(wav.data, 4, 1, wav.file);
+		fread(wav.dataChunk, 4, 1, wav.file);
 		fread(buffer4, 4, 1, wav.file);
 		wav.dataSize = littleToBig4(buffer4);
 
@@ -613,25 +629,15 @@ WAVFile openWAVFile(const char *filename)
 
 		wav.duration = (float64)wav.overallSize / wav.byteRate;
 
-		wav.stream = (int16 *)malloc(wav.numSamples * sizeof(int16));
-		fread(wav.stream, wav.numSamples, 1, wav.file);
-		int16 max = 0;
+		wav.data = (int16 *)calloc(wav.numSamples, sizeof(int16));
+		fread(wav.data, wav.numSamples, 1, wav.file);
+		wav.maxSample = SHRT_MIN;
+		wav.minSample = SHRT_MAX;
 		for(int i = 0; i < wav.numSamples; ++i)
 		{
-			if(wav.stream[i] > max) max = wav.stream[i];
+			if(wav.data[i] > wav.maxSample) wav.maxSample = wav.data[i];
+			if(wav.data[i] < wav.minSample) wav.minSample = wav.data[i];
 		}
-		wav.fStream = (float64 *)calloc(wav.numSamples, sizeof(float64));
-		printf("Max: %d\n", max);
-		float64 maxx = (float64)max;
-		printf("FMax: %.6f\n", maxx);
-		for(int i = 0; i < wav.numSamples; ++i)
-		{
-			int16 sample = wav.stream[i];
-			if(sample < 0) sample = -sample;
-			float64 fsample = (float64)sample;
-			wav.fStream[i] = (100.0f - fsample) / (maxx - fsample); // TODO(alex): SO this
-		}
-		int i = 0;
 	}
 	else
 	{
@@ -645,12 +651,45 @@ inline void closeWAVFile(WAVFile wav)
 {
 	fclose(wav.file);
 	free(wav.filename);
-	free(wav.stream);
+	free(wav.data);
+}
+
+void averages(float64 *data, int start, int end, float64 *posAvg, float64 *negAvg)
+{
+	int posCount = 0, negCount = 0;
+
+	for(int i = start; i < end; ++i)
+	{
+		if(data[i] > 0)
+		{
+			posCount++;
+			(*posAvg) += data[i];
+		}
+		else
+		{
+			negCount++;
+			(*negAvg) += data[i];
+		}
+	}
+
+	(*posAvg) /= posCount;
+	(*negAvg) /= negCount;
 }
 
 int main(int argc, char **argv)
 {
 	printf("Hello world\n\n");
+	
+	#if 0
+	{
+		int x;
+		int y;
+		switch(y)
+		{
+			case 1: x = 5; break;
+		}
+	}
+	#endif
 
 	srand((unsigned)time(NULL));
 
@@ -720,11 +759,18 @@ int main(int argc, char **argv)
 	SDL_Surface *surface = SDL_GetWindowSurface(window);
 	SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(surface);
 
-	SDL_Surface *wavSurface = SDL_CreateRGBSurface(0, 1920, 1080, 32, 
+	SDL_Surface *wavSurface = SDL_CreateRGBSurface(0, 1280, 700, 32, 
 	                                              0x00FF0000,
 	                                              0x0000FF00,
 	                                              0x000000FF,
 	                                              0xFF000000);
+	SDL_FillRect(wavSurface, NULL, 0xFF1F1F1F);
+	if(!wavSurface)
+	{
+		printf("Could not create wav surface.\n");
+		printf("%s\n", SDL_GetError());
+		return -1;
+	}
 	SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_NONE);
 
 	if(!renderer)
@@ -806,6 +852,40 @@ int main(int argc, char **argv)
 	}
 	Mix_PauseMusic();
 
+	int h = (wavSurface->h / 2);
+	int x = 0;
+	float32 chunks = (float32)wavFile.numSamples / (float32)(wavSurface->w * 2);
+	chunks = floor(--chunks);
+	printf("chunks: %f\n", chunks);
+	for(int i = 0; i < wavFile.numSamples; i += chunks)
+	{
+		int16 lmax = SHRT_MIN;
+		int16 lmin = SHRT_MAX;
+		int16 rmax = SHRT_MIN;
+		int16 rmin = SHRT_MAX;
+		for(int j = i; j < i + chunks;)
+		{
+			int16 l = wavFile.data[j++];
+			int16 r = wavFile.data[j++];
+			if(l > lmax) lmax = l;
+			if(l < lmin) lmin = l;
+			if(r > rmax) rmax = r;
+			if(r < rmin) rmin = r;
+		}
+		int lpmax = lmax * (h / 2) / wavFile.maxSample;
+		int lpmin = lmin * (h / 2) / wavFile.minSample;
+		int rpmax = rmax * (h / 2) / wavFile.maxSample;
+		int rpmin = rmin * (h / 2) / wavFile.minSample;
+		vline(wavSurface, (h / 2) + lpmax, (h / 2) - lpmin, x, 0xFF80FF80);
+		vline(wavSurface, (wavSurface->h - (h / 2)) + rpmax, (wavSurface->h - (h / 2)) - rpmin, x, 0xFFFF8080);
+		x++;
+	}
+
+	hline(wavSurface, 0, wavSurface->w, wavSurface->h / 2, 0xFF000000);
+	hline(wavSurface, 0, wavSurface->w, wavSurface->h / 4, 0xFF4A4A4A);
+	hline(wavSurface, 0, wavSurface->w, wavSurface->h - (wavSurface->h / 4), 0xFF4A4A4A);
+	
+	float32 cursor = 0;
 	uint64 startClock = SDL_GetTicks();
 	do
 	{
@@ -843,6 +923,8 @@ int main(int argc, char **argv)
 			}
 		}
 		#endif
+
+		#if 0
 		if(DELAY)
 		{
 			if(TickTimer(&gen)) posNegWaveform(wavSurface, 0xFF, fontConsolas24);
@@ -851,16 +933,20 @@ int main(int argc, char **argv)
 		{
 			posNegWaveform(wavSurface, 0xFF, fontConsolas24);
 		}
+		#endif
 
 		// BouncingSquares(surface, rlist);
 		// PulsingHexes(renderer, surface, plist);
-
-		SDL_BlitSurface(wavSurface, NULL, surface, NULL);
+		SDL_Rect wsRect = { 0, Half_WH - (wavSurface->h / 2), wavSurface->w, wavSurface->h };
+		SDL_BlitSurface(wavSurface, NULL, surface, &wsRect);
+		vline(surface, 10, Window_Height - 10, cursor, 0xFFFFFF00);
+		if(!Mix_PausedMusic()) cursor += (wavFile.duration / (float32)wavSurface->w);
+		if(cursor >= wavSurface->w) cursor = 0;
 		SDL_UpdateWindowSurface(window);
 
 		uint64 ms = SDL_GetTicks() - startClock;
 		// Delay the screen refresh so we are at a constant frame rate.
-		while(ms < 33) { ms = SDL_GetTicks() - startClock; }
+		// while(ms < 33) { ms = SDL_GetTicks() - startClock; }
 		uint64 fps = 0;
 		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
 		if(fps < 30)

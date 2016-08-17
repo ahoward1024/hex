@@ -83,15 +83,43 @@ void line(SDL_Surface *surface, const uint32 x1, const uint32 y1, const uint32 x
 void vline(SDL_Surface *surface, const int32 y1, const int32 y2, const uint32 x, 
            const uint32 color)
 {
-  for(int32 i = y1; i <= y2; ++i)
+  if(y2 == y1) return;
+  int32 begin, end;
+  if(y2 > y1) 
+  {
+    begin = y1;
+    end = y2;
+  }
+  else
+  {
+    begin = y2;
+    end = y1;
+  }
+  for(int32 i = begin; i <= end; ++i)
+  {
     setPixel(surface, x, i, color);
+  }
 }
 
 void hline(SDL_Surface *surface, const int32 x1, const int32 x2, const uint32 y, 
            const uint32 color)
 {
-  for(int32 i = x1; i <= x2; ++i)
+  if(x1 == x2) return;
+  int32 begin, end;
+  if(x2 > x1)
+  {
+    begin = x1;
+    end = x2;
+  }
+  else
+  {
+    begin = x2;
+    end = x1;
+  }
+  for(int32 i = begin; i <= end; ++i)
+  {
     setPixel(surface, i, y, color);
+  }
 }
 
 

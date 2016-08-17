@@ -4,6 +4,50 @@
 		"selected_items":
 		[
 			[
+				"Fou",
+				"Fourth_WW"
+			],
+			[
+				"num",
+				"numSamples"
+			],
+			[
+				"Fourt",
+				"Fourth_WH"
+			],
+			[
+				"Window",
+				"Window_Width"
+			],
+			[
+				"Wind",
+				"Window_Width"
+			],
+			[
+				"Win",
+				"Window_Height"
+			],
+			[
+				"window",
+				"Window_Height"
+			],
+			[
+				"eixt",
+				"exit_code"
+			],
+			[
+				"append",
+				"append_string"
+			],
+			[
+				"W",
+				"Window_Width"
+			],
+			[
+				"WIN",
+				"Window_Width"
+			],
+			[
 				"SDL_INT",
 				"SDL_INIT_AUDIO"
 			],
@@ -22,10 +66,6 @@
 			[
 				"Nex",
 				"NextHexFromMid"
-			],
-			[
-				"W",
-				"Window_Height"
 			],
 			[
 				"HEX",
@@ -73,10 +113,6 @@
 			],
 			[
 				"Widnow",
-				"Window_Height"
-			],
-			[
-				"Window",
 				"Window_Height"
 			],
 			[
@@ -172,10 +208,6 @@
 				"DrawHexToSurface"
 			],
 			[
-				"Win",
-				"Window_Height"
-			],
-			[
 				"del",
 				"deltax"
 			],
@@ -220,16 +252,8 @@
 				"Window_Height"
 			],
 			[
-				"window",
-				"Window_Width"
-			],
-			[
 				"SDL_Dest",
 				"SDL_DestroyTexture"
-			],
-			[
-				"Wind",
-				"Window_Width"
 			],
 			[
 				"Gl",
@@ -490,51 +514,43 @@
 			[
 				"Vid",
 				"VideoClip"
-			],
-			[
-				"AVC",
-				"AV_CODEC_CAP_DELAY"
-			],
-			[
-				"size",
-				"sizeof"
-			],
-			[
-				"to",
-				"totalFrames"
-			],
-			[
-				"ui",
-				"uint32"
-			],
-			[
-				"Vide",
-				"VideoClip"
-			],
-			[
-				"av_pa",
-				"av_packet_unref"
 			]
 		]
 	},
-	"build_system": "",
+	"build_system": "Packages/C++/C++ Single File.sublime-build",
 	"build_system_choices":
 	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		]
 	],
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 260.0,
-		"last_filter": "insta",
+		"height": 375.0,
+		"last_filter": "open",
 		"selected_items":
 		[
 			[
-				"insta",
-				"Package Control: Install Package"
-			],
-			[
 				"open",
 				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
 			],
 			[
 				"install",
@@ -560,6 +576,7 @@
 		"height": 410.0,
 		"history":
 		[
+			"reload",
 			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
 		]
 	},
@@ -574,6 +591,13 @@
 	},
 	"file_history":
 	[
+		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
+		"/E/Code/C/hex/res/hex.ico",
+		"/E/Code/C/hex/res/res.wav",
+		"/E/Programs/sublimetext/Data/Packages/User/hex_viewer.sublime-settings",
+		"/E/Programs/sublimetext/Data/Packages/Highlight Build Errors/HighlightBuildErrors.py",
+		"/E/Programs/sublimetext/Data/Packages/User/HighlightBuildErrors.sublime-settings",
+		"/E/Programs/sublimetext/Data/Packages/sublime-text-2-buildview/commands.py",
 		"/E/Code/C/hex/build.bat",
 		"/E/Libs/ffmpeg/ffmpegsrc/ffplay.c",
 		"/E/Code/C/hex/hex.rc",
@@ -600,7 +624,6 @@
 		"/E/Programs/sublimetext/Data/Packages/User/Batch File.sublime-build",
 		"/e/code/c/mouse/inc/sdl2/SDL_rect.h",
 		"/E/Programs/sublimetext/Data/Packages/Default/Default (Windows).sublime-keymap",
-		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
 		"/E/Programs/sublimetext/Data/Packages/User/Owl of Shame.tmTheme",
 		"/E/Programs/sublimetext/Data/Packages/User/bh_core.sublime-settings",
 		"/E/Programs/sublimetext/Data/Packages/BracketHighlighter/bh_core.sublime-settings",
@@ -622,8 +645,6 @@
 		"/E/Libs/ffmpeg/ffmpeg/lib/swresample-2.def",
 		"/E/Libs/ffmpeg/ffmpeg/lib/swscale-4.def",
 		"/E/Code/C/mouse/begin.bat",
-		"/E/Programs/sublimetext/Data/Packages/User/HighlightBuildErrors.sublime-settings",
-		"/E/Programs/sublimetext/Data/Packages/Highlight Build Errors/HighlightBuildErrors.py",
 		"/E/Programs/sublimetext/Data/Packages/User/Package Control.sublime-settings",
 		"/E/Code/C/win32/win32.cpp",
 		"/E/Code/C/mouse/datatypes.h",
@@ -661,6 +682,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"find_all_results",
 			"hex.m",
 			"LENGTH",
 			"SDL_BLENDMODE",
@@ -816,15 +838,31 @@
 		"selected_items":
 		[
 			[
+				"bu",
+				"build.bat"
+			],
+			[
+				"dra",
+				"drawing.h"
+			],
+			[
 				"hex",
 				"hex.cpp"
 			],
 			[
-				"build",
+				"buil",
 				"build.bat"
 			],
 			[
 				"bui",
+				"build.bat"
+			],
+			[
+				"dr",
+				"drawing.h"
+			],
+			[
+				"build",
 				"build.bat"
 			],
 			[
@@ -930,10 +968,6 @@
 			[
 				"",
 				".gitignore"
-			],
-			[
-				"buil",
-				"build.bat"
 			],
 			[
 				"colr",
