@@ -4,6 +4,42 @@
 		"selected_items":
 		[
 			[
+				"Window",
+				"Window_Width"
+			],
+			[
+				"lcM",
+				"lcMinCache"
+			],
+			[
+				"Win",
+				"Window_Width"
+			],
+			[
+				"wind",
+				"Window_Width"
+			],
+			[
+				"WIN",
+				"Window_Height"
+			],
+			[
+				"SHRT",
+				"SHRT_MAX"
+			],
+			[
+				"curs",
+				"cursorRect"
+			],
+			[
+				"max",
+				"maxSample"
+			],
+			[
+				"float",
+				"float64"
+			],
+			[
 				"Fou",
 				"Fourth_WW"
 			],
@@ -16,16 +52,8 @@
 				"Fourth_WH"
 			],
 			[
-				"Window",
-				"Window_Width"
-			],
-			[
 				"Wind",
 				"Window_Width"
-			],
-			[
-				"Win",
-				"Window_Height"
 			],
 			[
 				"window",
@@ -41,10 +69,6 @@
 			],
 			[
 				"W",
-				"Window_Width"
-			],
-			[
-				"WIN",
 				"Window_Width"
 			],
 			[
@@ -258,10 +282,6 @@
 			[
 				"Gl",
 				"Global_paused"
-			],
-			[
-				"wind",
-				"Window_Height"
 			],
 			[
 				"0xFFFF",
@@ -494,26 +514,6 @@
 			[
 				"strea",
 				"streamIndex"
-			],
-			[
-				"avp",
-				"av_init_packet"
-			],
-			[
-				"code",
-				"codecCtx"
-			],
-			[
-				"avcodec",
-				"avcodec_decode_video2"
-			],
-			[
-				"AVPic",
-				"AVPictureType"
-			],
-			[
-				"Vid",
-				"VideoClip"
 			]
 		]
 	},
@@ -682,6 +682,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"wavFile.data",
 			"find_all_results",
 			"hex.m",
 			"LENGTH",
@@ -842,12 +843,16 @@
 				"build.bat"
 			],
 			[
-				"dra",
-				"drawing.h"
+				"h",
+				"hex.cpp"
 			],
 			[
 				"hex",
 				"hex.cpp"
+			],
+			[
+				"dra",
+				"drawing.h"
 			],
 			[
 				"buil",
