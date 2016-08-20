@@ -25,6 +25,17 @@ void setPixel(SDL_Surface *surface, const int32 x, const int32 y, const uint32 c
   }
 }
 
+const char *getBlendMode(SDL_Surface *surface)
+{
+  SDL_BlendMode bm;
+  SDL_GetSurfaceBlendMode(surface, &bm);
+  if(bm == SDL_BLENDMODE_NONE) return "NONE";
+  else if(bm == SDL_BLENDMODE_BLEND) return "BLEND";
+  else if(bm == SDL_BLENDMODE_ADD) return "ADD";
+  else if(bm == SDL_BLENDMODE_MOD) return "MOD";
+  else return "???";
+}
+
 void DrawTextToSurface(SDL_Surface *dest, int x, int y, const char *text, 
                        TTF_Font *font, SDL_Color color)
 {

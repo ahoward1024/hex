@@ -4,16 +4,24 @@
 		"selected_items":
 		[
 			[
+				"pea",
+				"peaksRect"
+			],
+			[
 				"Window",
 				"Window_Width"
 			],
 			[
-				"lcM",
-				"lcMinCache"
+				"Win",
+				"Window_Height"
 			],
 			[
-				"Win",
-				"Window_Width"
+				"sam",
+				"sampleSize"
+			],
+			[
+				"lcM",
+				"lcMinCache"
 			],
 			[
 				"wind",
@@ -126,10 +134,6 @@
 			[
 				"lit",
 				"littleToBig2"
-			],
-			[
-				"sam",
-				"sampleRate"
 			],
 			[
 				"WIndow",
@@ -510,10 +514,6 @@
 			[
 				"avd",
 				"avcodec_decode_video2"
-			],
-			[
-				"strea",
-				"streamIndex"
 			]
 		]
 	},
@@ -839,12 +839,24 @@
 		"selected_items":
 		[
 			[
-				"bu",
-				"build.bat"
+				"au",
+				"audio.h"
 			],
 			[
 				"h",
 				"hex.cpp"
+			],
+			[
+				"colo",
+				"inc\\colors.h"
+			],
+			[
+				"he",
+				"hex.cpp"
+			],
+			[
+				"bu",
+				"build.bat"
 			],
 			[
 				"hex",
@@ -931,10 +943,6 @@
 				"mouse.cpp"
 			],
 			[
-				"au",
-				"audio.h"
-			],
-			[
 				"mo",
 				"mouse.cpp"
 			],
@@ -981,10 +989,6 @@
 			[
 				"mous",
 				"mouse.cpp"
-			],
-			[
-				"colo",
-				"colors.h"
 			],
 			[
 				"git",

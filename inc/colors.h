@@ -40,8 +40,8 @@ internal tColor tColorFromHex(uint32 color);
 
 // CUSTOM FCOLORS
 
-#ifdef COLOR_MODE_ABGR8888
-// STANDARD COLORS                    0xAABBGGRR (SDL GFX SPECIFIED)
+#ifdef COLORMODE_ABGR8888
+//                                    0xAABBGGRR (SDL GFX SPECIFIED)
 static const uint32 COLOR_WHITE     = 0xFFFFFFFF;
 static const uint32 COLOR_BLACK     = 0xFF000000;
 static const uint32 COLOR_GREY      = 0xFF808080;
@@ -53,7 +53,8 @@ static const uint32 COLOR_BLUE      = 0xFFFF0000;
 static const uint32 COLOR_CYAN      = 0xFFFFFF00;
 static const uint32 COLOR_MAGENTA   = 0xFFFF00FF;
 static const uint32 COLOR_YELLOW    = 0xFF00FFFF;
-#else
+#elif defined COLORMODE_ARGB8888
+//                                    0xAARRGGBB
 static const uint32 COLOR_WHITE     = 0xFFFFFFFF;
 static const uint32 COLOR_BLACK     = 0xFF000000;
 static const uint32 COLOR_GREY      = 0xFF808080;
@@ -65,6 +66,19 @@ static const uint32 COLOR_BLUE      = 0xFF0000FF;
 static const uint32 COLOR_CYAN      = 0xFF00FFFF;
 static const uint32 COLOR_MAGENTA   = 0xFFFF00FF;
 static const uint32 COLOR_YELLOW    = 0xFFFFFF00;
+#else
+//                                    0xRRGGBBAA
+static const uint32 COLOR_WHITE     = 0xFFFFFFFF;
+static const uint32 COLOR_BLACK     = 0x000000FF;
+static const uint32 COLOR_GREY      = 0x808080FF;
+static const uint32 COLOR_LIGHTGREY = 0xC0C0C0FF;
+static const uint32 COLOR_DARKGREY  = 0x404040FF;
+static const uint32 COLOR_RED       = 0xFF0000FF;
+static const uint32 COLOR_GREEN     = 0x00FF00FF;
+static const uint32 COLOR_BLUE      = 0x0000FFFF;
+static const uint32 COLOR_CYAN      = 0x00FFFFFF;
+static const uint32 COLOR_MAGENTA   = 0xFF00FFFF;
+static const uint32 COLOR_YELLOW    = 0xFFFF00FF;
 #endif
 
 // STANDARD TCOLORS
@@ -128,6 +142,20 @@ internal tColor tColorFromHex(uint32 color)
   result.b = (uint8)(color >> 16);
   result.a = (uint8)(color >> 24);
   return result;
+}
+
+float32 colorClampFloat(float32 value)
+{
+  if(value > 1.0f) return 1.0f;
+  if(value < 0.0f) return 0.0f;
+  else return value;
+}
+
+int colorClampInt(int value)
+{
+  if(value > 255) return 255;
+  if(value < 0) return 0;
+  else return value;
 }
 
 #endif

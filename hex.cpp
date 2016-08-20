@@ -4,19 +4,20 @@
 #include <assert.h>
 #include <float.h>
 
+
 #include "SDL/SDL.h"
 #include "SDL/SDL_framerate.h"
 #include "SDL/SDL_ttf.h"
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_mixer.h"
 
-#include "drawing.h"
-#include "hexagon.h"
 
-#include "datatypes.h"
 #include "xtrace.h"
+#include "datatypes.h"
+#define  COLORMODE_ARGB8888
 #include "colors.h"
 #include "timer.h"
+#include "drawing.h"
 
 #include "resource.h"
 
@@ -37,700 +38,54 @@ global bool CLEAR = true;
 global int REFRATE = 1;
 global int VOLUME = SDL_MIX_MAXVOLUME;
 global bool DELAY = false;
-global float32 cursor = 0.0f;
+global float32 cursor = 10.0f;
 
-struct Rect
-{
-	SDL_Rect rect;
-	int32 vx;
-	int32 vy;
-	uint32 color;
-};
+static const uint32 COLOR_BACKGROUNDC  = 0xFF1F1F1F;
+static const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; 
+static const uint32 COLOR_RIGHTCHANNEL = 0xFFFF8080;
+static const uint32 COLOR_LIGHTLINE    = 0xFF4A4A4A;
 
-struct RectList
-{
-	Rect *rects;
-	int   size;
-};
+#include "wave.h"
 
-struct HexList
-{
-	Hexagon *hexes;
-	int      size;
-};
+#include "handleevents.h"
 
-void PulsingHexes(SDL_Renderer *renderer, SDL_Surface *surface, HexList *hlist)
-{
-	uint32 color = 0xFFFFFFFF;
-	uint8 r = 0xFF;
-	uint8 g = 0xFF;
-	uint8 b = 0xFF;
-	const uint8 a = 0xFF;
-	if(!Global_paused)
-	{
-		r += (rand() % 255);
-		g += (rand() % 255);
-		b += (rand() % 255);
-
-		if(LENGTH == 9) FLIP = true;
-		else if(LENGTH == 1705) FLIP = true;
-
-		if(FLIP)
-		{
-			FLIP = false;
-			UP = !UP;
-			SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
-			SDL_RenderClear(renderer);
-		}
-
-		if(UP) LENGTH += INCREMENT;
-		if(!UP) LENGTH -= INCREMENT;
-	}
-
-	for(int j = 0; j < 9; ++j)
-	{
-		for(int i = 0; i < 7; ++i)
-		{
-			uint32 color = (b << 0) | (g << 8) | (r << 16) | (a << 24);
-			DrawHexToSurface(surface, hlist->hexes[j]);
-		}
-	}
-}
-
-Rect createRect()
-{
-	Rect rect = {0};
-	SDL_Rect sdlrect = {0};
-	sdlrect.w = 10;
-	sdlrect.h = 10;
-	sdlrect.x = rand() % Window_Width;
-	sdlrect.y = rand() % Window_Height;	
-
-	rect.rect = sdlrect;
-
-	int ra = rand() & 1;
-	if(ra) rect.vx = 1;
-	else rect.vx = -1;
-	ra = rand() & 1;
-	if(ra) rect.vy = 1;
-	else rect.vy = -1;
-
-	uint8 r = (rand() % 256) + 1;
-	uint8 g = (rand() % 256) + 1;
-	uint8 b = (rand() % 256) + 1;
-	uint8 a = (rand() % 256) + 128;
-
-	rect.color = (b << 0) | (g << 8) | (r << 16) | (a << 24);
-	// printf("%d\n", a);
-
-	return rect;
-}
-
-RectList createRectList(int size)
-{
-	RectList rectList = {0};
-	rectList.size = size;
-	rectList.rects = (Rect *)malloc(rectList.size * sizeof(Rect));
-	for(int i = 0; i < rectList.size; ++i)
-	{
-		rectList.rects[i] = createRect();
-	}
-	return rectList;
-}
-
-SDL_Point * createHexGridPoints()
-{
-	int w2 = Window_Width / 2;
-	int w4 = Window_Width / 4;
-	int h2 = Window_Height / 2;
-	int h4 = Window_Height / 4;
-
-	static SDL_Point plist[9];
-	plist[0] = { w4, h4 };
-	plist[1] = { w4, h2 };
-	plist[2] = { w4, h2 + h4 };
-	plist[3] = { w2, h4 };
-	plist[4] = { w2, h2 };
-	plist[5] = { w2, h2 + h4 };
-	plist[6] = { w2 + w4, h4 };
-	plist[7] = { w2 + w4, h2 };
-	plist[8] = { w2 + w4, h2 + h4 };
-
-	return plist;
-}
-
-void checkRect(Rect *rect)
-{
-	if(rect->rect.x <= 0)
-	{
-		rect->vx *= -1;
-	} 
-	else if(rect->rect.x >= (Window_Width - rect->rect.w))
-	{
-		rect->vx *= -1;
-	}
-
-	if(rect->rect.y <= 0)
-	{
-		rect->vy *= -1;
-	}
-	else if(rect->rect.y >= (Window_Height - rect->rect.h))
-	{
-		rect->vy *= -1;
-	}
-}
-
-void moveRect(Rect *rect)
-{
-	rect->rect.x += rect->vx;
-	rect->rect.y += rect->vy;
-}
-
-void BouncingSquares(SDL_Surface *surface, RectList rectList)
-{
-	for(int i = 0; i < rectList.size; ++i)
-	{
-		checkRect(&rectList.rects[i]);
-		SDL_FillRect(surface, &rectList.rects[i].rect, rectList.rects[i].color);
-		moveRect(&rectList.rects[i]);
-	}
-}
-
-int colorClamp(int value)
-{
-	if(value > 255) return 255;
-	if(value < 0) return 0;
-	else return value;
-}
-
-// >>> Adapted from: http://jcatki.no-ip.org:8080/SDL_mixer/demos/sdlwav.c
-/* set this to any of 512,1024,2048,4096              */
-/* the lower it is, the more FPS shown and CPU needed */
-#define BUFFER 1024
-#define W Window_Width /* NEVER make this be less than BUFFER! */
-#define H Window_Height
-#define H2 (H/2)
-#define H4 (H/4)
-#define Y(sample) (((sample)*H)/4/0x7FFF)
-
-Sint16 stream[2][BUFFER*2*2];
-int len = BUFFER * 2 * 2, done = 0, bits = 0, which = 0, sample_size = 0, position = 0, rate = 0;
-float dy;
-int mmax = 0;
-
-static void postmix(void *udata, Uint8 *_stream, int _len)
+void AudioPostMix(void *udata, uint8 *stream, int len)
 {
 	SDL_Surface *s = (SDL_Surface *)udata;
-	position += _len / sample_size;
-	/* fprintf(stderr,"pos=%7.2f seconds \r",position/(float)rate); */
-	/* save the stream buffer and indicate that we need a redraw */
-	len = _len;
-	memcpy(stream[(which + 1) % 2], _stream, len > (s->w * 4) ? (s->w * 4) : len);
-	which = (which + 1) % 2;
-}
-
-void posNegWaveform(SDL_Surface *s, uint8 alpha, TTF_Font *font)
-{
-	int x;
-	Sint16 *buf;
-
-	/*fprintf(stderr,"len=%d   \r",len); */
-
-	buf=stream[which];
-	
-	SDL_LockSurface(s);
-
-	/* draw the wav from the saved stream buffer */
-	SDL_Rect r;
-	SDL_FillRect(s, NULL, 0x00000000);
-	int max = 0;
-	#if 1
-	for(x = 0; x < (W * 2); x++)
+	int32 *audio = (int32 *)calloc(len / 4, sizeof(int32));
+	SDL_FillRect(s, NULL, 0xFF000000);
+	memcpy(audio, stream, len);
+	int16 lmax = SHRT_MIN;
+	int16 rmax = SHRT_MIN;
+	for(int i = 0; i < len / 2; ++i)
 	{
-		const int X = x >> 1, b = x & 1, t = H4 + H2 * b;
-		int y1,h1;
-		int top = 10;
-		if(buf[x] < 0)
+		if(audio[i])
 		{
-			if(-buf[x] > max) max = -buf[x];
-			h1 = -Y(buf[x]);
-			y1 = t - h1;
-
-			#if 1
-			if(h1 > 0)
-			{
-				r = { X, y1 - top, 1, top };
-				SDL_FillRect(s, &r, 0xDB00FFFF);
-			}
-			#endif
-		}
-		else
-		{
-			if(buf[x] > max) max = buf[x];
-			y1 = t;
-			h1 = Y(buf[x]);
-
-			#if 1
-			if(h1 > 0)
-			{
-				r = { X, y1 + h1, 1, top };
-				SDL_FillRect(s, &r, 0xDB00FFFF);
-			}
-			#endif
-		}
-		#if 0
-		{
-			r = { X, H2 * b, 1 };
-			r.h = y1 - r.y;
-			uint8 red = colorClamp(r.h >> 2);
-			uint8 green = colorClamp(0x80);
-			uint8 blue = colorClamp(r.h >> 2);
-			uint32 color = (alpha << 24) | (red << 16) | (green << 8) | (blue << 0);
-			SDL_FillRect(s, &r, color);
-		}
-		#endif
-		{
-			
-			#if 1
-			r = { X, y1, 1, h1 };
-			uint8 red = colorClamp(r.h * 2);
-			uint8 green = colorClamp((r.h * 4) % 2);
-			uint8 blue = colorClamp(r.h << 4);
-			uint32 color = (0x80 << 24) | (red << 16) | (green << 8) | (blue << 0);
-			//color = 0xDBFF00FFF;
-			SDL_FillRect(s, &r, color);
-			#endif
-		}
-		#if 0
-		{
-			r = { X, y1+h1, 1 };
-			r.h = H2 + H2 * b - r.y;
-			uint8 red = colorClamp(0x80);
-			uint8 green = colorClamp(r.h >> 2);
-			uint8 blue = colorClamp(r.h >> 2);
-			uint32 color = (alpha << 24) | (red << 16) | (green << 8) | (blue << 0);
-			SDL_FillRect(s, &r, color);
-		}
-		#endif
-	}
-	#endif
-	int y = 0;
-	{
-		#if 1
-		y = (max)*Window_Height/0x7FFF;
-		SDL_Rect peak = { Window_Width / 2 - 10, Window_Height - y - 5, 20, y };
-		SDL_FillRect(s, &peak, 0xFF000000);
-		peak = { Window_Width / 2 - 5, Window_Height - y, 10, y };
-		uint8 red = colorClamp(0x00);
-		uint8 blue = colorClamp(0x00);
-		uint8 green = colorClamp(y);
-		uint32 color = (0xFF << 24) | (red << 16) | (green << 8) | (blue << 0);
-		SDL_FillRect(s, &peak, color);
-		if(max > mmax) mmax = max;
-		y = (mmax)*Window_Height/0x7FFF;
-		peak = { Window_Width / 2 - 5, Window_Height - y, 10, 3 };
-		SDL_FillRect(s, &peak, 0xFFFF0000);
-		#endif
-	}
-	SDL_UnlockSurface(s);
-	char num[32];
-	sprintf(num, "%d", mmax);
-	SDL_Color white = { 255, 255, 255, 255 };
-	DrawTextToSurface(s, Window_Width / 2 + 10, Window_Height - y - 10, num, font, white);
-}
-// <<< Adapted from: http://jcatki.no-ip.org:8080/SDL_mixer/demos/sdlwav.c
-
-const char *getBlendMode(SDL_Surface *surface)
-{
-	SDL_BlendMode bm;
-	SDL_GetSurfaceBlendMode(surface, &bm);
-	if(bm == SDL_BLENDMODE_NONE) return "NONE";
-	else if(bm == SDL_BLENDMODE_BLEND) return "BLEND";
-	else if(bm == SDL_BLENDMODE_ADD) return "ADD";
-	else if(bm == SDL_BLENDMODE_MOD) return "MOD";
-	else return "???";
-}
-
-void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, 
-                  SDL_Surface *wavSurface, uint32 *color1, uint32 *color2, HexList *hexList, 
-                  SDL_Point mid, Timer *timer, Mix_Music *music)
-{
-	SDL_Event event;
-	if(SDL_PollEvent(&event))
-	{
-		switch(event.type)
-		{
-			case SDL_QUIT:
-			{
-				Global_running = false;
-			} break;
-			case SDL_MOUSEWHEEL:
-			{
-				switch(event.wheel.type)
-				{
-					case SDL_MOUSEWHEEL:
-					{
-						int amount;
-						if(event.wheel.y > 0) amount = 16;
-						else amount = -16;
-						if(VOLUME < SDL_MIX_MAXVOLUME)
-						{
-							VOLUME += amount;
-						}
-						else if(VOLUME > 0)
-						{
-							VOLUME += amount;
-						}
-						Mix_VolumeMusic(VOLUME);
-					} break;
-				}
-			}
-			case SDL_KEYDOWN:
-			{
-				SDL_Keycode key = event.key.keysym.sym;
-				switch(key)
-				{
-					case SDLK_ESCAPE:
-					{
-						Global_running = false;
-					} break;
-					case SDLK_EQUALS:
-					{
-						if(LENGTH <= 9999) LENGTH += INCREMENT;
-					} break;
-					case SDLK_MINUS:
-					{
-						if(LENGTH > 9 + INCREMENT) LENGTH -= INCREMENT;
-						else LENGTH = 9;
-					} break;
-					case SDLK_SPACE:
-					{
-						Global_paused = !Global_paused;
-						if(Mix_PausedMusic()) 
-						{
-							if(Mix_PlayingMusic())
-							{
-								Mix_ResumeMusic();
-							}
-							else
-							{
-								if(Mix_PlayMusic(music, -1) == -1)
-								{
-									printf("Could not play music.\n");
-								}
-							}
-						}
-						else
-						{
-							Mix_PauseMusic();
-						}
-					} break;
-					case SDLK_z:
-					{
-						Mix_HaltMusic();
-						cursor = 0.0f;
-					} break;
-					case SDLK_c:
-					{
-						CLEAR = !CLEAR;
-					} break;
-					case SDLK_v:
-					{
-						SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
-						SDL_RenderClear(renderer);
-					}
-					case SDLK_m:
-					{
-						*color1 = createRandomColor();
-						*color2 = createRandomColor();
-					} break;
-					case SDLK_g:
-					{
-						hexList->hexes[0].m = mid;
-						SDL_Point start = mid;
-						for(int i = 1; i < hexList->size; ++i)
-						{
-							int nextHexSide = rand() % 7;
-							hexList->hexes[i].m = NextHexFromMid(hexList->hexes[0], (Hex_Side)nextHexSide);
-							start = hexList->hexes[i].m;
-						}
-					} break;
-					case SDLK_b:
-					{
-						SDL_BlendMode bm;
-						SDL_GetSurfaceBlendMode(wavSurface, &bm);
-						if(bm == SDL_BLENDMODE_BLEND) SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_MOD);
-						else if(bm == SDL_BLENDMODE_NONE) SDL_SetSurfaceBlendMode(wavSurface, 
-						                                                          SDL_BLENDMODE_MOD);
-						else SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_BLEND);
-					} break;
-					case SDLK_n:
-					{
-						SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_NONE);
-					} break;
-					case SDLK_t:
-					{
-						if(timer->_bound == 1) timer->_bound = 500;
-						else timer->_bound = 1;
-						DELAY = !DELAY;
-					} break;
-					case SDLK_r:
-					{
-						Mix_RewindMusic(); // Does not work with WAV files...
-					}
-					case SDLK_RIGHT:
-					{
-					} break;
-					case SDLK_LEFT:
-					{
-					} break;
-				}
-			}
-			case SDL_WINDOWEVENT:
-			{
-				switch(event.window.event)
-				{
-					case SDL_WINDOWEVENT_MINIMIZED:
-					{
-						Global_paused = true;
-					} break;
-				}
-			} break;
-		}
-	}
-}
-
-/**
- * Convert seconds into hh:mm:ss format
- * Params:
- *  seconds - seconds value
- * Returns: hms - formatted string
- **/
- char *seconds_to_time(float64 raw_seconds) {
-  char *hms;
-  int hours, hours_residue, minutes, seconds, milliseconds;
-  hms = (char *)malloc(100);
- 
-  sprintf(hms, "%f", raw_seconds);
- 
-  hours = (int) raw_seconds/3600;
-  hours_residue = (int) raw_seconds % 3600;
-  minutes = hours_residue/60;
-  seconds = hours_residue % 60;
-  milliseconds = 0;
- 
-  // get the decimal part of raw_seconds to get milliseconds
-  char *pos;
-  pos = strchr(hms, '.');
-  int ipos = (int) (pos - hms);
-  char decimalpart[15];
-  memset(decimalpart, ' ', sizeof(decimalpart));
-  strncpy(decimalpart, &hms[ipos+1], 3);
-  milliseconds = atoi(decimalpart);
-  
-  sprintf(hms, "%d:%02d:%02d.%d", hours, minutes, seconds, milliseconds);
-  return hms;
-}
-
-
-// http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
-struct WAVFile
-{
-	FILE    *file;
-	char    *filename;
-	// HEADER
-	uint8    riffChunk[4];
-	uint32   overallSize;
-	uint8    wave[4];
-	// FORMAT CHUNK
-	uint8    fmtChunk[4];
-	uint32   fmtLength;
-	uint32   fmtType;
-	uint32   channels;
-	uint32   sampleRate;
-	uint32   byteRate;
-	uint32   blockAlign;
-	uint32   bitsPerSample;
-	// DATA CHUNK
-	uint8    dataChunk[4];
-	uint32   dataSize;
-	// COUNTS
-	uint64   numSamples;
-	uint64   numFrames;
-	uint64   sampleSize;
-	float64  duration;
-	int16    maxLeft;
-	int16 	 minLeft;
-	int16    maxRight;
-	int16    minRight;
-	// STREAM
-	int32   *data;
-};
-
-inline const char *getWAVFormatType(uint32 fmtType)
-{
-	switch(fmtType)
-	{
-		case  1:  return "PCM";     break;
-		case  6:  return "A-law";   break;
-		case  7:  return "Mu-law";  break;
-		default:  return "Unknown"; break;
-	}
-}
-
-inline void printWAVFile(WAVFile wav)
-{
-	printf("<\nWAVFile: %s\n", wav.filename);
-	printf("HEADER:\n");
-		printf("\t%c%c%c%c\n", wav.riffChunk[0], wav.riffChunk[1], wav.riffChunk[2], wav.riffChunk[3]);
-		printf("\tSize in bytes: %d\n", wav.overallSize);
-		printf("\t%c%c%c%c\n", wav.wave[0], wav.wave[1], wav.wave[2], wav.wave[3]);
-	printf("FORMAT CHUNK:\n");
-		printf("\t%c%c%c%c\n", wav.fmtChunk[0], wav.fmtChunk[1], wav.fmtChunk[2], wav.fmtChunk[3]);
-		printf("\tFormat length: %d\n", wav.fmtLength);
-		printf("\tFormat type: %s\n", getWAVFormatType(wav.fmtType));
-		printf("\tChannels: %d\n", wav.channels);
-		printf("\tSample rate: %d\n", wav.sampleRate);
-		printf("\tByte rate: %d\n", wav.byteRate);
-		printf("\tBlock align: %d\n", wav.blockAlign);
-		printf("\tBits per sample: %d\n", wav.bitsPerSample);
-	printf("DATA CHUNK:\n");
-		printf("\t%c%c%c%c\n", wav.dataChunk[0], wav.dataChunk[1], wav.dataChunk[2], wav.dataChunk[3]);
-		printf("\tData size: %d\n", wav.dataSize);
-	printf("COUNTS:\n");
-		printf("\tNumber of samples: %d\n", wav.numSamples);
-		printf("\tSample size: %d\n", wav.sampleSize);
-		printf("\tDuration in seconds: %.4f\n", wav.duration);
-		printf("\tDuration in time: %s\n", seconds_to_time(wav.duration));
-		printf("\tMax left sample: %d\n", wav.maxLeft);
-		printf("\tMin left sample: %d\n", wav.minLeft);
-		printf("\tMax right sample: %d\n", wav.maxRight);
-		printf("\tMin right sample: %d\n", wav.minRight);
-	printf(">\n\n");
-}
-
-inline uint32 littleToBig2(uint8 buffer[2])
-{
-	return buffer[0] | (buffer[1] << 8);
-}
-
-inline uint32 littleToBig4(uint8 buffer[4])
-{
-	return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
-}
-
-WAVFile openWAVFile(const char *filename)
-{
-	WAVFile wav = {0};
-	wav.file = fopen(filename, "rb");
-	if(wav.file)
-	{
-		uint8 buffer4[4];
-		uint8 buffer2[2];
-		wav.filename = (char *)malloc(strlen(filename) * sizeof(char));
-		strcpy(wav.filename, filename);
-		fread(wav.riffChunk, 4, 1, wav.file);
-		fread(buffer4, 4, 1, wav.file);
-		wav.overallSize = littleToBig4(buffer4);
-		fread(wav.wave, 4, 1,  wav.file);
-		fread(wav.fmtChunk, 4, 1, wav.file);
-		fread(buffer4, 4, 1, wav.file);
-		wav.fmtLength = littleToBig4(buffer4);
-		fread(buffer2, 2, 1, wav.file);
-		wav.fmtType = littleToBig2(buffer2);
-		fread(buffer2, 2, 1, wav.file);
-		wav.channels = littleToBig2(buffer2);
-		fread(buffer4, 4, 1, wav.file);
-		wav.sampleRate = littleToBig4(buffer4);
-		fread(buffer4, 4, 1, wav.file);
-		wav.byteRate = littleToBig4(buffer4);
-		fread(buffer2, 2, 1, wav.file);
-		wav.blockAlign = littleToBig2(buffer2);
-		fread(buffer2, 2, 1, wav.file);
-		wav.bitsPerSample = littleToBig2(buffer2);
-		fread(wav.dataChunk, 4, 1, wav.file);
-		fread(buffer4, 4, 1, wav.file);
-		wav.dataSize = littleToBig4(buffer4);
-
-		wav.sampleSize = (wav.channels * wav.bitsPerSample) / 8;
-		wav.duration = (float64)wav.overallSize / (float64)wav.byteRate;
-		wav.numSamples = wav.dataSize / wav.channels;
-		wav.numFrames = wav.dataSize / 4;
-
-		wav.data = (int32 *)calloc(wav.numFrames, sizeof(int32));
-		fread(wav.data, wav.dataSize, sizeof(int8), wav.file);
-
-		FILE *outfile = fopen("outfile.bin", "wb");
-		fwrite(wav.data, sizeof(int32), wav.numFrames, outfile);
-		fclose(outfile);
-
-		wav.maxLeft = SHRT_MIN;
-		wav.minLeft = SHRT_MAX;
-		wav.maxLeft = SHRT_MIN;
-		wav.minRight = SHRT_MAX;
-		for(int i = 0; i < wav.numFrames; ++i)
-		{
-			int32 s = wav.data[i];
+			int32 s = audio[i];
 			int16 l = s >> 16;
 			int16 r = s & 0xFFFF;
-			// Thanks! https://graphics.stanford.edu/~seander/bithacks.html
-			wav.maxLeft = l ^ ((l ^ wav.maxLeft) & -(l < wav.maxLeft));
-			wav.minLeft = wav.minLeft ^ ((l ^ wav.minLeft) & -(l < wav.minLeft));
-			wav.maxRight = r ^ ((r ^ wav.maxRight) & -(l < wav.maxRight));
-			wav.minRight = wav.minRight ^ ((l ^ wav.minRight) & -(l < wav.minRight));
-		}
-	}
-	else
-	{
-		printf("Could not open file %s \n", filename);
-	}
-
-	return wav;
-}
-
-inline void closeWAVFile(WAVFile wav)
-{
-	fclose(wav.file);
-	free(wav.filename);
-	free(wav.data);
-}
-
-void averages(float64 *data, int start, int end, float64 *posAvg, float64 *negAvg)
-{
-	int posCount = 0, negCount = 0;
-
-	for(int i = start; i < end; ++i)
-	{
-		if(data[i] > 0)
-		{
-			posCount++;
-			(*posAvg) += data[i];
+			lmax = l ^ ((l ^ lmax) & -(l < lmax));
+			rmax = r ^ ((r ^ rmax) & -(r < rmax));
 		}
 		else
 		{
-			negCount++;
-			(*negAvg) += data[i];
+			break;
 		}
 	}
 
-	(*posAvg) /= posCount;
-	(*negAvg) /= negCount;
+	int ly = lmax * s->h / 0x7FFF;
+	int ry = rmax * s->h / 0x7FFF;
+	SDL_Rect lr = { 0, s->h - ly, 10, ly };
+	SDL_Rect rr = { 12, s->h - ry, 10, ry };
+	SDL_FillRect(s, &lr, 0xFF00FF00);
+	SDL_FillRect(s, &rr, 0xFF00FF00);
+
+	free(audio);
 }
 
 int main(int argc, char **argv)
 {
 	printf("Hello world\n\n");
-	
-	#if 0
-	{
-		int x;
-		int y;
-		switch(y)
-		{
-			case 1: x = 5; break;
-		}
-	}
-	#endif
 
 	srand((unsigned)time(NULL));
 
@@ -753,6 +108,8 @@ int main(int argc, char **argv)
 	const char *musicFileName = "../res/res.wav";
 	WAVFile wavFile = openWAVFile(musicFileName);
 	printWAVFile(wavFile);
+	SDL_Surface *wavSurface = createWaveformSurface(wavFile, Window_Height - 20);
+	closeWAVFile(wavFile);
 
 	Mix_Music *music = Mix_LoadMUS(musicFileName);
 	if(!music)
@@ -764,9 +121,7 @@ int main(int argc, char **argv)
 	int audio_channels = 0, audio_rate = 0;
 	Uint16 audio_format;
 	Mix_QuerySpec(&audio_rate, &audio_format, &audio_channels);
-	int bits = audio_format & 0xFF;
-	sample_size = bits / 8 + audio_channels;
-	rate = audio_rate;
+	// PRINT AUDIO INFORMATION
 	#if 0
   char *format_str="Unknown";
   switch(audio_format)
@@ -782,6 +137,13 @@ int main(int argc, char **argv)
          audio_rate, format_str, audio_channels, bits);
   printf("End Audio\n\n");
 	#endif
+	SDL_Surface *peaks = SDL_CreateRGBSurface(0, 22, Window_Height, 32,
+	                                          0x00FF0000,
+	                                          0x0000FF00,
+	                                          0x000000FF,
+	                                          0xFF000000);
+	SDL_SetSurfaceBlendMode(peaks, SDL_BLENDMODE_BLEND);
+	Mix_SetPostMix(AudioPostMix, peaks);
 
 	uint32 windowFlags = 0;
 	// windowFlags |= SDL_WINDOW_FULLSCREEN;
@@ -807,7 +169,9 @@ int main(int argc, char **argv)
 		printf("%s\n", SDL_GetError());
 		return -1;
 	}
-	#if 0
+
+	// PRINT RENDERER INFORMATION
+	#if 1
 	SDL_RendererInfo rinfo;
 	SDL_GetRendererInfo(renderer, &rinfo);
 	printf("Video:\nRenderer name: %s\n", rinfo.name);
@@ -826,57 +190,9 @@ int main(int argc, char **argv)
 		printf("%s\n", TTF_GetError());
 		return -1;
 	}
-
 	TTF_Font *fontConsolas24 = TTF_OpenFont("../res/consolas.ttf", 24);
 
-	SDL_Color white = { 255, 255, 255, 255 };
-
-	SDL_Point *plist = createHexGridPoints();
-
-	RectList rlist = createRectList(100);
-
-	SDL_Point mid = { Window_Width / 2, Window_Height / 2 };
-
-	int hexListIndex = 0;
-	SDL_Point p = { 0, 0 };
-	int rows = 120;
-	int cols = 108;
-	HexList hexList;
-	hexList.size = rows * (cols * 2);
-	hexList.hexes = (Hexagon *)calloc(hexList.size, sizeof(Hexagon));
-	for(int i = 0; i < rows; ++i)
-	{
-		for(int j = 0; j < cols; ++j)
-		{
-			Hexagon hex = { p, LENGTH, 0xFFFFFFFF };
-			int tmp = hexListIndex;
-			hexList.hexes[hexListIndex++] = hex;
-			p = { NextHexFromMid(hexList.hexes[tmp], HEXSIDE_UR) };
-			hex = { p, LENGTH, 0xFFFFFFFF };
-			hexList.hexes[hexListIndex++] = hex;
-			p = { NextHexFromMid(hexList.hexes[tmp], HEXSIDE_MR) };
-		}
-		p = { NextHexFromMid(hexList.hexes[i * (cols * 2)], HEXSIDE_D) };
-	}
-	
-	uint32 color1 = 0xFFFF0000;
-	uint32 color2 = 0xFF00FF00;
-
-	SDL_Rect originalWindowSize = { Window_Width, Window_Height };
-
-	SDL_Rect scaledWindowSize = { 3456, 1944 };
-
-	Timer ref = CreateTimer(1);
-	Timer gen = CreateTimer(1000);
-
 	Mix_VolumeMusic(VOLUME);
-	#if 0
-	if(Mix_FadeInMusic(music, 1, 3000) == -1)
-	{
-		printf("Failed to play music.\n");
-		return -1;
-	}
-	#endif
 	#if 1
 	if(Mix_PlayMusic(music, -1) == -1)
 	{
@@ -885,158 +201,32 @@ int main(int argc, char **argv)
 	}
 	#endif
 	Mix_PauseMusic();
-
-	SDL_Surface *wavSurface = SDL_CreateRGBSurface(0, Window_Width, Window_Height, 32, 
-	                                              0x00FF0000,
-	                                              0x0000FF00,
-	                                              0x000000FF,
-	                                              0xFF000000);
-	if(!wavSurface)
-	{
-		printf("Could not create wav surface.\n");
-		printf("%s\n", SDL_GetError());
-		return -1;
-	}
-	SDL_SetSurfaceBlendMode(wavSurface, SDL_BLENDMODE_NONE);
-	SDL_FillRect(wavSurface, NULL, 0xFF1F1F1F);
-
-	int h = (wavSurface->h / 2);
-	int slices = 512;
-	int chunks = wavFile.numFrames / slices;
-	printf("chunks: %d\n", chunks);
-
-	int *lcMaxCache = (int *)calloc(chunks, sizeof(int));
-	int *lcMinCache = (int *)calloc(chunks, sizeof(int));
-	int *rcMaxCache = (int *)calloc(chunks, sizeof(int));
-	int *rcMinCache = (int *)calloc(chunks, sizeof(int));
-
-	int16 lmax = SHRT_MIN;
-	int16 rmax = SHRT_MIN;
-	int16 lmin = SHRT_MAX;
-	int16 rmin = SHRT_MAX;
-
-	#if 1
-	int inc = 0;
-	int rset = 0;
-	int x = 0;
-	for(int i = 0; i < wavFile.numFrames; ++i)
-	{
-		int32 s = wavFile.data[i];
-		int16 l = s >> 16;
-		int16 r = s & 0xFFFF;
-		// Thanks! https://graphics.stanford.edu/~seander/bithacks.html
-		lmax = l ^ ((l ^ lmax) & -(l < lmax));
-		rmax = r ^ ((r ^ rmax) & -(r < rmax));
-		lmin = lmin ^ ((l ^ lmin) & -(l < lmin));
-		rmin = rmin ^ ((r ^ rmin) & -(r < rmin));
-		if(rset == slices)
-		{
-			lcMaxCache[inc] = lmax * (h / 2) / wavFile.maxLeft;
-			lcMinCache[inc] = lmin * (h / 2) / wavFile.minLeft;
-			rcMaxCache[inc] = rmax * (h / 2) / wavFile.maxRight;
-			rcMinCache[inc] = rmin * (h / 2) / wavFile.minRight;
-
-			lmax = SHRT_MIN;
-			rmax = SHRT_MIN;
-			lmin = SHRT_MAX;
-			rmin = SHRT_MAX;
-
-			++inc;
-			rset = 0;
-			++x;
-		}
-		else
-		{
-			++rset;
-		}
-	}
-	#endif
-
-	int f = chunks / wavSurface->w;
-	inc = 0;
-	for(int x = 0; x < wavSurface->w; ++x)
-	{
-		int16 lpmax = lcMaxCache[inc];
-		int16 lpmin = lcMinCache[inc];
-		int16 rpmax = rcMaxCache[inc];
-		int16 rpmin = rcMinCache[inc];
-		inc += f;
-
-		vline(wavSurface, (h / 2) + lpmax, (h / 2) - lpmin, x, 0xFF80FF80);
-		vline(wavSurface, (wavSurface->h - (h / 2)) + rpmax, (wavSurface->h - (h / 2)) - rpmin, 
-	      	x, 0xFFFF8080);
-	}
-
-	hline(wavSurface, 0, wavSurface->w, wavSurface->h / 2, 0xFF000000);
-	hline(wavSurface, 0, wavSurface->w, wavSurface->h / 4, 0xFF4A4A4A);
-	hline(wavSurface, 0, wavSurface->w, wavSurface->h - (wavSurface->h / 4), 0xFF4A4A4A);
-
-	Mix_SetPostMix(postmix, wavSurface);
 	
 	uint64 startClock = SDL_GetTicks();
 	do
 	{
-		HandleEvents(renderer, window, wavSurface, &color1, &color2, &hexList, mid, &ref, music);
-		#if 1
-		if(CLEAR) clear(renderer);
-		#endif
+		HandleEvents(renderer, window, music, &cursor);
 
-		// if(TickTimer(&ref)) refresh(wavSurface);
+		clear(renderer, 0xFF1F1F1F);
 
-		#if 0
-		if(TickTimer(&gen))
-		{
-			Point start = mid;
-			for(int i = 1; i < hexAmount; ++i)
-			{
-				int nextHexSide = rand() % 7;
-				hexList[i] = NextHexFromMid(start, 9, (Hex_Side)nextHexSide);
-				start = hexList[i];
-			}
-		}
-		#endif
-
-		#if 0
-		// Draw random hex grid
-		for (int i = 0; i < hexList.size; ++i)
-		{
-			if(i == 7 || i == 8)
-			{
-				DrawHexToSurface(surface, hexList.hexes[i]);
-			}
-			else
-			{
-				DrawHexToSurface(surface, hexList.hexes[i]);
-			}
-		}
-		#endif
-
-		#if 0
-		if(DELAY)
-		{
-			if(TickTimer(&gen)) posNegWaveform(wavSurface, 0xFF, fontConsolas24);
-		}
-		else
-		{
-			posNegWaveform(wavSurface, 0xFF, fontConsolas24);
-		}
-		#endif
-
-		// BouncingSquares(surface, rlist);
-		// PulsingHexes(renderer, surface, plist);
-		SDL_Rect wsRect = { 0, Half_WH - (wavSurface->h / 2), wavSurface->w, wavSurface->h };
-		SDL_BlitSurface(wavSurface, NULL, surface, &wsRect);
+		SDL_Rect wsRect = { 10, Half_WH - (wavSurface->h / 2), (surface->w - 50), wavSurface->h };
+		SDL_BlitScaled(wavSurface, NULL, surface, &wsRect);
+		SDL_Rect peaksRect = { Window_Width - peaks->w - 5, 0, peaks->w, peaks->h };
+		SDL_BlitSurface(peaks, NULL, surface, &peaksRect);
 		vline(surface, 10, Window_Height - 10, cursor, 0xFFFFFF00);
+
+		// TODO(alex): Make the cursor move at the actual rate of the song.
 		if(!Mix_PausedMusic() && Mix_PlayingMusic()) 
 			cursor += (wavFile.duration / (float32)wavSurface->w);
+		if(cursor >= (surface->w - 50)) cursor = 10.0f;
 		SDL_UpdateWindowSurface(window);
 
 		uint64 ms = SDL_GetTicks() - startClock;
 		// Delay the screen refresh so we are at a constant frame rate.
-		while(ms < 33) { ms = SDL_GetTicks() - startClock; }
+		while(ms < 10) { ms = SDL_GetTicks() - startClock; }
 		uint64 fps = 0;
 		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
-		if(fps < 30)
+		if(fps < 100)
 		{
 			time_t rawtime;
 			struct tm *timeinfo;
@@ -1058,13 +248,6 @@ int main(int argc, char **argv)
 	SDL_FreeSurface(surface);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
-	closeWAVFile(wavFile);
-
-	free(lcMaxCache);
-	free(lcMinCache);
-	free(rcMaxCache);
-	free(rcMinCache);
-
 
 	printf("Goodbye.\n");
 
