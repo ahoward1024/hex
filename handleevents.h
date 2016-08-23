@@ -1,8 +1,22 @@
 #ifndef HANDLEEVENTS_H
 #define HANDLEEVENTS_H
 
-void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mix_Music *music, float32 *cursor)
+static const SDL_Point MOUSERESET = { INT_MIN, INT_MIN };
+
+struct Mouse
 {
+  int x;
+  int y;
+  SDL_Point click = MOUSERESET;
+  bool ctoggle = false;
+};
+
+bool insideWaveRect;
+
+void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_Music *music, 
+                  float32 *cursor, SDL_Surface *surface, SDL_Surface *wavSurface, SDL_Rect *wsRect)
+{
+  SDL_GetMouseState(&mouse->x, &mouse->y);
   SDL_Event event;
   if(SDL_PollEvent(&event))
   {
@@ -11,6 +25,41 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mix_Music *music, 
       case SDL_QUIT:
       {
         Global_running = false;
+      } break;
+      case SDL_MOUSEMOTION:
+      {
+        if(insideWaveRect)
+        {
+          if(mouse->y < mouse->click.y)
+          {
+            if(wsRect->w < wavSurface->w)
+            {
+              wsRect->w += (mouse->click.y - mouse->y);
+            }
+          }
+          else if(mouse->y > mouse->click.y)
+          {
+            if(wsRect->w > surface->w - 50)
+            {
+              wsRect->w -= (mouse->y - mouse->click.y);
+            }
+          }
+        }
+      } break;
+      case SDL_MOUSEBUTTONDOWN:
+      {
+        if(!mouse->ctoggle)
+        {
+          mouse->click = { mouse->x, mouse->y };
+          mouse->ctoggle = true;
+        }
+        if(SDL_PointInRect(&mouse->click, wsRect)) insideWaveRect = true;
+      } break;
+      case SDL_MOUSEBUTTONUP:
+      {
+        mouse->click = MOUSERESET;
+        mouse->ctoggle = false;
+        insideWaveRect = false;
       } break;
       case SDL_MOUSEWHEEL:
       {
@@ -66,6 +115,10 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mix_Music *music, 
           } break;
           case SDLK_a:
           {
+            if(wsRect->w > surface->w - 50)
+            {
+              wsRect->w -= 20;
+            }
           } break;
           case SDLK_b:
           {
@@ -120,6 +173,10 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mix_Music *music, 
           } break;
           case SDLK_s:
           {
+            if(wsRect->w < wavSurface->w)
+            {
+              wsRect->w += 20;
+            }
           } break;
           case SDLK_t:
           {

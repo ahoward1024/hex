@@ -203,14 +203,19 @@ int main(int argc, char **argv)
 	Mix_PauseMusic();
 	
 	uint64 startClock = SDL_GetTicks();
+	int targetMSPF = 16;
+	int targetFPS = 60;
+	Mouse mouse;
+	SDL_Rect wsRect = { 10, Half_WH - (wavSurface->h / 2), surface->w - 50, wavSurface->h };
+	SDL_Rect wsRectSource = { 0, 0, wavSurface->w, wavSurface->h };
+	SDL_RenderSetClipRect(renderer, NULL);
 	do
 	{
-		HandleEvents(renderer, window, music, &cursor);
+		HandleEvents(renderer, window, &mouse, music, &cursor, surface, wavSurface, &wsRect);
 
 		clear(renderer, 0xFF1F1F1F);
 
-		SDL_Rect wsRect = { 10, Half_WH - (wavSurface->h / 2), (surface->w - 50), wavSurface->h };
-		SDL_BlitScaled(wavSurface, NULL, surface, &wsRect);
+		SDL_BlitScaled(wavSurface, &wsRectSource, surface, &wsRect);
 		SDL_Rect peaksRect = { Window_Width - peaks->w - 5, 0, peaks->w, peaks->h };
 		SDL_BlitSurface(peaks, NULL, surface, &peaksRect);
 		vline(surface, 10, Window_Height - 10, cursor, 0xFFFFFF00);
@@ -223,16 +228,16 @@ int main(int argc, char **argv)
 
 		uint64 ms = SDL_GetTicks() - startClock;
 		// Delay the screen refresh so we are at a constant frame rate.
-		while(ms < 10) { ms = SDL_GetTicks() - startClock; }
+		while(ms < targetMSPF) { ms = SDL_GetTicks() - startClock; }
 		uint64 fps = 0;
 		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
-		if(fps < 100)
+		if(fps < targetFPS)
 		{
 			time_t rawtime;
 			struct tm *timeinfo;
 			time(&rawtime);
 			timeinfo = localtime(&rawtime);
-			printf("Below 30 fps:\n%s%.4f Seconds in\n\n", asctime(timeinfo),
+			printf("Below %d fps:\n%s%.4f Seconds in\n\n", targetFPS, asctime(timeinfo),
 			       (float)SDL_GetTicks() / 1000.0f);
 		}
 		char wtextBuffer[128];

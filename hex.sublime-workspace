@@ -4,6 +4,22 @@
 		"selected_items":
 		[
 			[
+				"in",
+				"insideWaveRect"
+			],
+			[
+				"SDL_P",
+				"SDL_PointInRect"
+			],
+			[
+				"target",
+				"targetFPS"
+			],
+			[
+				"COLORMAS",
+				"COLORMASK_ARGB888"
+			],
+			[
 				"pea",
 				"peaksRect"
 			],
@@ -170,10 +186,6 @@
 			[
 				"sample",
 				"sample_size"
-			],
-			[
-				"in",
-				"include"
 			],
 			[
 				"SDL_BL",
@@ -502,18 +514,6 @@
 			[
 				"Global_vi",
 				"Global_videoClip"
-			],
-			[
-				"Glo",
-				"Global_playIndex"
-			],
-			[
-				"windo",
-				"windowWidth"
-			],
-			[
-				"avd",
-				"avcodec_decode_video2"
 			]
 		]
 	},
@@ -591,6 +591,7 @@
 	},
 	"file_history":
 	[
+		"/E/Code/C/hex/handleevents.h",
 		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
 		"/E/Code/C/hex/res/hex.ico",
 		"/E/Code/C/hex/res/res.wav",
@@ -839,6 +840,30 @@
 		"selected_items":
 		[
 			[
+				"hand",
+				"handleevents.h"
+			],
+			[
+				"hex",
+				"hex.cpp"
+			],
+			[
+				"wav",
+				"wave.h"
+			],
+			[
+				"color",
+				"inc\\colors.h"
+			],
+			[
+				"han",
+				"handleevents.h"
+			],
+			[
+				"dra",
+				"drawing.h"
+			],
+			[
 				"au",
 				"audio.h"
 			],
@@ -857,14 +882,6 @@
 			[
 				"bu",
 				"build.bat"
-			],
-			[
-				"hex",
-				"hex.cpp"
-			],
-			[
-				"dra",
-				"drawing.h"
 			],
 			[
 				"buil",
@@ -905,10 +922,6 @@
 			[
 				"vide",
 				"video.h"
-			],
-			[
-				"color",
-				"colors.h"
 			],
 			[
 				"mosu",
