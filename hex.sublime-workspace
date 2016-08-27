@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"SHR",
+				"SHRT_MIN"
+			],
+			[
 				"in",
 				"insideWaveRect"
 			],
@@ -510,10 +514,6 @@
 			[
 				"AV",
 				"AV_CODEC_CAP_DELAY"
-			],
-			[
-				"Global_vi",
-				"Global_videoClip"
 			]
 		]
 	},
@@ -840,16 +840,16 @@
 		"selected_items":
 		[
 			[
-				"hand",
-				"handleevents.h"
+				"wav",
+				"wave.h"
 			],
 			[
 				"hex",
 				"hex.cpp"
 			],
 			[
-				"wav",
-				"wave.h"
+				"hand",
+				"handleevents.h"
 			],
 			[
 				"color",

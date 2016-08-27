@@ -62,12 +62,16 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
 
   int inc = 0;
   int rset = 0;
-  int x = 0;
   for(int i = 0; i < wav.numFrames; ++i)
   {
     int32 s = wav.data[i];
-    int16 l = s >> 16;
-    int16 r = s & 0xFFFF;
+    // The wave format is as follows:
+    // 0x UB LB
+    //    LC RC
+    // But because of little endianness we need to flip these so the left channel becomes
+    // the lower bits, and the right channel the upper bits.
+    int16 l = s & 0xFFFF;
+    int16 r = s >> 16;
     // Thanks! https://graphics.stanford.edu/~seander/bithacks.html
     lmax = l ^ ((l ^ lmax) & -(l < lmax));
     rmax = r ^ ((r ^ rmax) & -(r < rmax));
@@ -87,7 +91,6 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
 
       ++inc;
       rset = 0;
-      ++x;
     }
     else
     {
@@ -273,6 +276,10 @@ WAVFile openWAVFile(const char *filename)
       wav.maxRight = r ^ ((r ^ wav.maxRight) & -(l < wav.maxRight));
       wav.minRight = wav.minRight ^ ((l ^ wav.minRight) & -(l < wav.minRight));
     }
+    assert(wav.maxLeft > 0);
+    assert(wav.minLeft < 0);
+    assert(wav.maxRight > 0);
+    assert(wav.minRight < 0);
   }
   else
   {

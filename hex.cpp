@@ -62,8 +62,9 @@ void AudioPostMix(void *udata, uint8 *stream, int len)
 		if(audio[i])
 		{
 			int32 s = audio[i];
-			int16 l = s >> 16;
-			int16 r = s & 0xFFFF;
+			// Flip the left and right channels because of endianness.
+			int16 l = s & 0xFFFF;
+			int16 r = s >> 16;
 			lmax = l ^ ((l ^ lmax) & -(l < lmax));
 			rmax = r ^ ((r ^ rmax) & -(r < rmax));
 		}
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	const char *musicFileName = "../res/res.wav";
+	const char *musicFileName = "../res/test.wav";
 	WAVFile wavFile = openWAVFile(musicFileName);
 	printWAVFile(wavFile);
 	SDL_Surface *wavSurface = createWaveformSurface(wavFile, Window_Height - 20);
