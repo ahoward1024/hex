@@ -840,12 +840,12 @@
 		"selected_items":
 		[
 			[
-				"wav",
-				"wave.h"
-			],
-			[
 				"hex",
 				"hex.cpp"
+			],
+			[
+				"wav",
+				"wave.h"
 			],
 			[
 				"hand",

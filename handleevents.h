@@ -115,9 +115,12 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_a:
           {
-            if(wsRect->w > surface->w - 50)
+            if(zoom > 0.4)
             {
-              wsRect->w -= 20;
+              zoom -= 0.2;
+              SDL_Surface *tmp = zoomSurface(wavSurface, zoom, 1.0f, 0);
+              SDL_BlitSurface(tmp, NULL, surface, NULL);
+              SDL_FreeSurface(tmp);
             }
           } break;
           case SDLK_b:
@@ -173,9 +176,12 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_s:
           {
-            if(wsRect->w < wavSurface->w)
+            if(zoom < 4.0)
             {
-              wsRect->w += 20;
+              zoom += 0.2;
+              SDL_Surface *tmp = zoomSurface(wavSurface, zoom, 1.0f, 0);
+              SDL_BlitSurface(tmp, NULL, surface, NULL);
+              SDL_FreeSurface(tmp);
             }
           } break;
           case SDLK_t:
