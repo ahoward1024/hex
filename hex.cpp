@@ -48,15 +48,16 @@ static const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; // Light green
 static const uint32 COLOR_RIGHTCHANNEL = 0xFFFF8080; // Light red
 static const uint32 COLOR_LIGHTLINE    = 0xFF4A4A4A; // Light grey
 
+SDL_Rect leftPeak = {0};
+SDL_Rect rightPeak = {0};
+
 #include "wave.h"
 
 #include "handleevents.h"
 
 void AudioPostMix(void *udata, uint8 *stream, int len)
 {
-	SDL_Surface *s = (SDL_Surface *)udata;
 	int32 *audio = (int32 *)calloc(len / 4, sizeof(int32));
-	SDL_FillRect(s, NULL, 0xFF000000);
 	memcpy(audio, stream, len);
 	int16 lmax = SHRT_MIN;
 	int16 rmax = SHRT_MIN;
@@ -77,12 +78,10 @@ void AudioPostMix(void *udata, uint8 *stream, int len)
 		}
 	}
 
-	int ly = lmax * s->h / 0x7FFF;
-	int ry = rmax * s->h / 0x7FFF;
-	SDL_Rect lr = { 0, s->h - ly, 10, ly };
-	SDL_Rect rr = { 12, s->h - ry, 10, ry };
-	SDL_FillRect(s, &lr, 0xFF00FF00);
-	SDL_FillRect(s, &rr, 0xFF00FF00);
+	int ly = lmax * Window_Height / 0x7FFF;
+	int ry = rmax * Window_Height / 0x7FFF;
+	leftPeak = { 0, Window_Height - ly, 10, ly };
+	rightPeak = { 12, Window_Height - ry, 10, ry };
 
 	free(audio);
 }
@@ -90,9 +89,10 @@ void AudioPostMix(void *udata, uint8 *stream, int len)
 int main(int argc, char **argv)
 {
 	printf("Hello world\n\n");
-
+	
 	srand((unsigned)time(NULL));
 
+	// -----------------------------------------------------------------------------------------------
 	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) != 0)
 	{
 		printf("Error initializing SDL. Exiting.\n");
@@ -101,6 +101,51 @@ int main(int argc, char **argv)
 	}
 	atexit(SDL_Quit);
 
+	// -----------------------------------------------------------------------------------------------
+	uint32 windowFlags = 0;
+	// windowFlags |= SDL_WINDOW_FULLSCREEN;
+	SDL_Window *window = SDL_CreateWindow("Hex", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+	                                      Window_Width, Window_Height, windowFlags);
+	if(!window)
+	{
+		printf("Could not create window. Exiting.\n");
+		printf("%s\n", SDL_GetError());
+		return -1;
+	}
+	IMG_Init(0);
+	SDL_RWops *rwop;
+	rwop = SDL_RWFromFile("../res/hex.ico", "rb");
+	SDL_Surface *icon = IMG_LoadICO_RW(rwop);
+	SDL_SetWindowIcon(window, icon);
+	SDL_FreeSurface(icon);
+
+	// -----------------------------------------------------------------------------------------------
+	// SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(windowSurface);
+	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED|
+	                                                        SDL_RENDERER_PRESENTVSYNC);
+
+	if(!renderer)
+	{
+		printf("Could not create renderer. Exiting.\n");
+		printf("%s\n", SDL_GetError());
+		return -1;
+	}
+
+	// PRINT RENDERER INFORMATION
+	#if 1
+	SDL_RendererInfo rinfo;
+	SDL_GetRendererInfo(renderer, &rinfo);
+	printf("Video:\nRenderer name: %s\n", rinfo.name);
+	printf("Texture formats: \n");
+	for(int i = 0; i < rinfo.num_texture_formats-1; ++i)
+	{
+		printf("\t%s,\n", SDL_GetPixelFormatName(rinfo.texture_formats[i]));
+	}
+	printf("\t%s\n", SDL_GetPixelFormatName(rinfo.texture_formats[rinfo.num_texture_formats-1]));
+	printf("End video\n\n");
+	#endif
+
+	// -----------------------------------------------------------------------------------------------
 	Mix_Init(0);
 
 	if(Mix_OpenAudio(48000, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
@@ -109,12 +154,14 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	// -----------------------------------------------------------------------------------------------
 	const char *musicFileName = "../res/res.wav";
 	WAVFile wavFile = openWAVFile(musicFileName);
 	printWAVFile(wavFile);
-	SDL_Surface *wavSurface = createWaveformSurface(wavFile, Window_Height - 20);
+	SDL_Texture *wavTexture = createWaveformTexture(renderer, wavFile, Window_Height - 20);
 	closeWAVFile(wavFile);
 
+	// -----------------------------------------------------------------------------------------------
 	Mix_Music *music = Mix_LoadMUS(musicFileName);
 	if(!music)
 	{
@@ -141,53 +188,9 @@ int main(int argc, char **argv)
          audio_rate, format_str, audio_channels, bits);
   printf("End Audio\n\n");
 	#endif
-	SDL_Surface *peaks = SDL_CreateRGBSurface(0, 22, Window_Height, 32,
-	                                          0x00FF0000,
-	                                          0x0000FF00,
-	                                          0x000000FF,
-	                                          0xFF000000);
-	SDL_SetSurfaceBlendMode(peaks, SDL_BLENDMODE_BLEND);
-	Mix_SetPostMix(AudioPostMix, peaks);
+	Mix_SetPostMix(AudioPostMix, NULL);
 
-	uint32 windowFlags = 0;
-	// windowFlags |= SDL_WINDOW_FULLSCREEN;
-	SDL_Window *window = SDL_CreateWindow("Hex: 0", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-	                                      Window_Width, Window_Height, windowFlags);
-	if(!window)
-	{
-		printf("Could not create window. Exiting.\n");
-		printf("%s\n", SDL_GetError());
-		return -1;
-	}
-	IMG_Init(0);
-	SDL_RWops *rwop;
-	rwop = SDL_RWFromFile("../res/hex.ico", "rb");
-	SDL_Surface *icon = IMG_LoadICO_RW(rwop);
-	SDL_SetWindowIcon(window, icon);
-	SDL_FreeSurface(icon);
-	SDL_Surface *windowSurface = SDL_GetWindowSurface(window);
-	SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(windowSurface);
-
-	if(!renderer)
-	{
-		printf("Could not create renderer. Exiting.\n");
-		printf("%s\n", SDL_GetError());
-		return -1;
-	}
-
-	// PRINT RENDERER INFORMATION
-	#if 1
-	SDL_RendererInfo rinfo;
-	SDL_GetRendererInfo(renderer, &rinfo);
-	printf("Video:\nRenderer name: %s\n", rinfo.name);
-	printf("Texture formats: \n");
-	for(int i = 0; i < rinfo.num_texture_formats-1; ++i)
-	{
-		printf("\t%s,\n", SDL_GetPixelFormatName(rinfo.texture_formats[i]));
-	}
-	printf("\t%s\n", SDL_GetPixelFormatName(rinfo.texture_formats[rinfo.num_texture_formats-1]));
-	printf("End video\n\n");
-	#endif
+	// -----------------------------------------------------------------------------------------------
 	TTF_Init();
 	if(!TTF_WasInit())
 	{
@@ -197,6 +200,7 @@ int main(int argc, char **argv)
 	}
 	TTF_Font *fontConsolas24 = TTF_OpenFont("../res/consolas.ttf", 24);
 
+	// -----------------------------------------------------------------------------------------------
 	Mix_VolumeMusic(VOLUME);
 	#if 1
 	if(Mix_PlayMusic(music, -1) == -1)
@@ -207,66 +211,29 @@ int main(int argc, char **argv)
 	#endif
 	Mix_PauseMusic();
 	
-	uint64 startClock = SDL_GetTicks();
-	uint64 targetMSPF = 33;
-	uint64 targetFPS = 30;
 	Mouse mouse;
-	SDL_Rect wsRectDest = { 10, Half_WH - (wavSurface->h / 2), windowSurface->w - 50, wavSurface->h };
-	SDL_Rect wsRectSrc  = { 0, 0, wavSurface->w, wavSurface->h };
-	SDL_RenderSetClipRect(renderer, NULL);
-	SDL_Surface *tmp = SDL_CreateRGBSurface(0, 22, wavSurface->w, wavSurface->h,
-	                                          0x00FF0000,
-	                                          0x0000FF00,
-	                                          0x000000FF,
-	                                          0xFF000000);
-	SDL_BlitSurface(tmp, NULL, wavSurface, NULL);
+	int w, h;
+	SDL_QueryTexture(wavTexture, NULL, NULL, &w, &h);
+	SDL_Rect wavRect = {0, 10, Window_Width - 100, h};
 	do
 	{
-		HandleEvents(renderer, window, &mouse, music, &cursor, windowSurface, wavSurface, &wsRectDest);
+		HandleEvents(renderer, window, &mouse, music, &cursor);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_RenderClear(renderer);
 
-		//clear(renderer, 0xFF1F1F1F);
-		//SDL_BlitSurface(wavSurface, &wsRectSrc, surface, &wsRectDest);
-		//SDL_BlitSurface(wavSurface, NULL, surface, NULL);
-		SDL_BlitSurface(tmp, NULL, windowSurface, NULL);
-
-		SDL_Rect peaksRect = { Window_Width - peaks->w - 5, 0, peaks->w, peaks->h };
-		SDL_BlitSurface(peaks, NULL, windowSurface, &peaksRect);
-		vline(windowSurface, 10, Window_Height - 10, cursor, COLOR_YELLOW);
+		SDL_RenderCopy(renderer, wavTexture, NULL, &wavRect);
 
 		// TODO(alex): Make the cursor move at the actual rate of the song.
 		if(!Mix_PausedMusic() && Mix_PlayingMusic()) 
-			cursor += (wavFile.duration / (float32)wavSurface->w);
-		if(cursor >= (windowSurface->w - 50)) cursor = 10.0f;
+			cursor += (wavFile.duration / (float32)Window_Width - 50);
+		if(cursor >= (Window_Width - 50)) cursor = 10.0f;
 
-		SDL_UpdateWindowSurface(window);
-
-		uint64 ms = SDL_GetTicks() - startClock;
-		// Delay the screen refresh so we are at a constant frame rate.
-		while(ms < targetMSPF) { ms = SDL_GetTicks() - startClock; }
-		uint64 fps = 0;
-		if(ms > 0) fps = (1.0f/(float32)ms) * 1000.0f;
-		#if 0
-		if(fps < targetFPS)
-		{
-			time_t rawtime;
-			struct tm *timeinfo;
-			time(&rawtime);
-			timeinfo = localtime(&rawtime);
-			printf("Below %d fps:\n%s%.4f Seconds in\n\n", targetFPS, asctime(timeinfo),
-			       (float)SDL_GetTicks() / 1000.0f);
-		}
-		#endif
-		char wtextBuffer[128];
-		sprintf(wtextBuffer, "Hex: ms/f: %llu, fps: %llu, %s, %s", ms, fps, 
-		        (CLEAR ? "CLEAR" : "NOCLEAR"), getBlendMode(wavSurface));
-		SDL_SetWindowTitle(window, wtextBuffer);
-		startClock = SDL_GetTicks();
+		SDL_RenderPresent(renderer);
 	} while(Global_running);
 
 	IMG_Quit();
 	TTF_CloseFont(fontConsolas24);
 	Mix_CloseAudio();
-	SDL_FreeSurface(windowSurface);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 

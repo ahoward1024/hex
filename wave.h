@@ -136,6 +136,22 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
   return surface;
 }
 
+SDL_Texture *createWaveformTexture(SDL_Renderer *renderer, WAVFile wav, int height)
+{
+  SDL_Texture *texture = {0};
+  SDL_Surface *tmp = createWaveformSurface(wav, height);
+  if(tmp) 
+  {
+    texture = SDL_CreateTextureFromSurface(renderer, tmp);
+    SDL_FreeSurface(tmp);
+  }
+  else 
+  {
+    printf("Error: Could not create waveform surface.\n");
+  }
+  return texture;
+}
+
 /**
  * Convert seconds into hh:mm:ss format
  * Params:

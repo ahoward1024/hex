@@ -14,7 +14,7 @@ struct Mouse
 bool insideWaveRect;
 
 void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_Music *music, 
-                  float32 *cursor, SDL_Surface *surface, SDL_Surface *wavSurface, SDL_Rect *wsRect)
+                  float32 *cursor)
 {
   SDL_GetMouseState(&mouse->x, &mouse->y);
   SDL_Event event;
@@ -28,32 +28,9 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
       } break;
       case SDL_MOUSEMOTION:
       {
-        if(insideWaveRect)
-        {
-          if(mouse->y < mouse->click.y)
-          {
-            if(wsRect->w < wavSurface->w)
-            {
-              wsRect->w += (mouse->click.y - mouse->y);
-            }
-          }
-          else if(mouse->y > mouse->click.y)
-          {
-            if(wsRect->w > surface->w - 50)
-            {
-              wsRect->w -= (mouse->y - mouse->click.y);
-            }
-          }
-        }
       } break;
       case SDL_MOUSEBUTTONDOWN:
       {
-        if(!mouse->ctoggle)
-        {
-          mouse->click = { mouse->x, mouse->y };
-          mouse->ctoggle = true;
-        }
-        if(SDL_PointInRect(&mouse->click, wsRect)) insideWaveRect = true;
       } break;
       case SDL_MOUSEBUTTONUP:
       {
@@ -115,13 +92,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_a:
           {
-            if(zoom > 0.4)
-            {
-              zoom -= 0.2;
-              SDL_Surface *tmp = zoomSurface(wavSurface, zoom, 1.0f, 0);
-              SDL_BlitSurface(tmp, NULL, surface, NULL);
-              SDL_FreeSurface(tmp);
-            }
+            
           } break;
           case SDLK_b:
           {
@@ -176,13 +147,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_s:
           {
-            if(zoom < 4.0)
-            {
-              zoom += 0.2;
-              SDL_Surface *tmp = zoomSurface(wavSurface, zoom, 1.0f, 0);
-              SDL_BlitSurface(tmp, NULL, surface, NULL);
-              SDL_FreeSurface(tmp);
-            }
+            
           } break;
           case SDLK_t:
           {
