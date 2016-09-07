@@ -43,7 +43,7 @@ struct WAVFile
   int32   *data;
 };
 
-SDL_Surface *createWaveformSurface(WAVFile wav, int height)
+SDL_Surface * WAV_createSurface(WAVFile wav, int height)
 {
   int h = (height / 2);
   int slices = 2048;
@@ -70,8 +70,9 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
     //    LC RC
     // But because of little endianness we need to flip these so the left channel becomes
     // the lower bits, and the right channel the upper bits.
-    int16 l = s & 0xFFFF;
     int16 r = s >> 16;
+    int16 l = s & 0xFFFF;
+
     // Thanks! https://graphics.stanford.edu/~seander/bithacks.html
     lmax = l ^ ((l ^ lmax) & -(l < lmax));
     rmax = r ^ ((r ^ rmax) & -(r < rmax));
@@ -79,10 +80,10 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
     rmin = rmin ^ ((r ^ rmin) & -(r < rmin));
     if(rset == slices)
     {
-      lcMaxCache[inc] = lmax * (h / 2) / wav.maxLeft;
-      lcMinCache[inc] = lmin * (h / 2) / wav.minLeft;
-      rcMaxCache[inc] = rmax * (h / 2) / wav.maxRight;
-      rcMinCache[inc] = rmin * (h / 2) / wav.minRight;
+      lcMaxCache[inc] = lmax * ((h / 2) - 10) / wav.maxLeft;
+      lcMinCache[inc] = lmin * ((h / 2) - 10) / wav.minLeft;
+      rcMaxCache[inc] = rmax * ((h / 2) - 10) / wav.maxRight;
+      rcMinCache[inc] = rmin * ((h / 2) - 10) / wav.minRight;
 
       lmax = SHRT_MIN;
       rmax = SHRT_MIN;
@@ -109,8 +110,7 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
     printf("%s\n", SDL_GetError());
     return surface;
   }
-  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
-  SDL_FillRect(surface, NULL, 0xFF1F1F1F);
+  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
 
   for(int x = 0; x < surface->w; ++x)
   {
@@ -136,10 +136,10 @@ SDL_Surface *createWaveformSurface(WAVFile wav, int height)
   return surface;
 }
 
-SDL_Texture *createWaveformTexture(SDL_Renderer *renderer, WAVFile wav, int height)
+SDL_Texture *WAV_createTexture(SDL_Renderer *renderer, WAVFile wav, int height)
 {
   SDL_Texture *texture = {0};
-  SDL_Surface *tmp = createWaveformSurface(wav, height);
+  SDL_Surface *tmp = WAV_createSurface(wav, height);
   if(tmp) 
   {
     texture = SDL_CreateTextureFromSurface(renderer, tmp);
@@ -184,7 +184,7 @@ SDL_Texture *createWaveformTexture(SDL_Renderer *renderer, WAVFile wav, int heig
   return hms;
 }
 
-inline const char *getWAVFormatType(uint32 fmtType)
+internal inline const char *getWAVFormatType(uint32 fmtType)
 {
   switch(fmtType)
   {
@@ -195,7 +195,7 @@ inline const char *getWAVFormatType(uint32 fmtType)
   }
 }
 
-inline void printWAVFile(WAVFile wav)
+internal inline void printWAVFile(WAVFile wav)
 {
   printf("<\nWAVFile: %s\n", wav.filename);
   printf("HEADER:\n");
@@ -226,17 +226,17 @@ inline void printWAVFile(WAVFile wav)
   printf(">\n\n");
 }
 
-inline uint32 littleToBig2(uint8 buffer[2])
+internal inline uint32 littleToBig2(uint8 buffer[2])
 {
   return buffer[0] | (buffer[1] << 8);
 }
 
-inline uint32 littleToBig4(uint8 buffer[4])
+internal inline uint32 littleToBig4(uint8 buffer[4])
 {
   return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
 }
 
-WAVFile openWAVFile(const char *filename)
+WAVFile WAV_openFile(const char *filename)
 {
   WAVFile wav = {0};
   wav.file = fopen(filename, "rb");
@@ -292,10 +292,10 @@ WAVFile openWAVFile(const char *filename)
       wav.maxRight = r ^ ((r ^ wav.maxRight) & -(l < wav.maxRight));
       wav.minRight = wav.minRight ^ ((l ^ wav.minRight) & -(l < wav.minRight));
     }
-    assert(wav.maxLeft > 0);
-    assert(wav.minLeft < 0);
-    assert(wav.maxRight > 0);
-    assert(wav.minRight < 0);
+    if(wav.maxLeft == 0) wav.maxLeft = SHRT_MAX;
+    if(wav.minLeft == 0) wav.minLeft = SHRT_MIN;
+    if(wav.maxRight == 0) wav.maxRight = SHRT_MAX;
+    if(wav.minRight == 0) wav.minRight = SHRT_MIN;
   }
   else
   {
@@ -305,7 +305,7 @@ WAVFile openWAVFile(const char *filename)
   return wav;
 }
 
-inline void closeWAVFile(WAVFile wav)
+inline void WAV_closeFile(WAVFile wav)
 {
   fclose(wav.file);
   free(wav.filename);
