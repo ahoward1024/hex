@@ -4,8 +4,88 @@
 		"selected_items":
 		[
 			[
+				"maxP",
+				"maxPeakL"
+			],
+			[
+				"Win",
+				"Window_Width"
+			],
+			[
+				"Window",
+				"Window_Width"
+			],
+			[
+				"WI",
+				"Window_Height"
+			],
+			[
+				"vuP",
+				"vuPeakRight"
+			],
+			[
+				"vu",
+				"vuPeakRight"
+			],
+			[
+				"WIn",
+				"Window_Width"
+			],
+			[
+				"vuPe",
+				"vuPeakLeft"
+			],
+			[
+				"Color",
+				"COLOR_VUPEAKYELLOW"
+			],
+			[
+				"COLOR",
+				"COLOR_VUPEAKRED"
+			],
+			[
+				"vuA",
+				"vuAvgRight"
+			],
+			[
+				"vuAg",
+				"vuAvgLeft"
+			],
+			[
+				"max",
+				"maxSampleL"
+			],
+			[
+				"maxS",
+				"maxSampleR"
+			],
+			[
+				"float",
+				"float32"
+			],
+			[
+				"Wi",
+				"Window_Height"
+			],
+			[
+				"flat",
+				"float64"
+			],
+			[
 				"SHR",
 				"SHRT_MIN"
+			],
+			[
+				"Wind",
+				"Window_Height"
+			],
+			[
+				"W",
+				"Window_Height"
+			],
+			[
+				"SDL_S",
+				"SDL_Surface"
 			],
 			[
 				"in",
@@ -26,14 +106,6 @@
 			[
 				"pea",
 				"peaksRect"
-			],
-			[
-				"Window",
-				"Window_Width"
-			],
-			[
-				"Win",
-				"Window_Height"
 			],
 			[
 				"sam",
@@ -60,14 +132,6 @@
 				"cursorRect"
 			],
 			[
-				"max",
-				"maxSample"
-			],
-			[
-				"float",
-				"float64"
-			],
-			[
 				"Fou",
 				"Fourth_WW"
 			],
@@ -80,10 +144,6 @@
 				"Fourth_WH"
 			],
 			[
-				"Wind",
-				"Window_Width"
-			],
-			[
 				"window",
 				"Window_Height"
 			],
@@ -94,10 +154,6 @@
 			[
 				"append",
 				"append_string"
-			],
-			[
-				"W",
-				"Window_Width"
 			],
 			[
 				"SDL_INT",
@@ -236,10 +292,6 @@
 				"Window_Height"
 			],
 			[
-				"Wi",
-				"Window_Height"
-			],
-			[
 				"SDL_Render",
 				"SDL_RenderClear"
 			],
@@ -306,10 +358,6 @@
 			[
 				"0xFFFF",
 				"0xFF0000FF"
-			],
-			[
-				"WIn",
-				"Window_Height"
 			],
 			[
 				"font",
@@ -466,54 +514,6 @@
 			[
 				"pict",
 				"pict_type"
-			],
-			[
-				"dec",
-				"decodeLiteralSingleFrame"
-			],
-			[
-				"fl",
-				"flushForCapDelay"
-			],
-			[
-				"AVS",
-				"AVSEEK_FLAG_BACKWARD"
-			],
-			[
-				"key",
-				"keyframeList"
-			],
-			[
-				"avcod",
-				"avcodec_decode_video2"
-			],
-			[
-				"acv",
-				"avcodec_decode_video2"
-			],
-			[
-				"av_rescale",
-				"av_rescale_q"
-			],
-			[
-				"is",
-				"iskeyframe"
-			],
-			[
-				"data",
-				"dataBuffer"
-			],
-			[
-				"dat",
-				"dataBuffer"
-			],
-			[
-				"stream",
-				"streamIndex"
-			],
-			[
-				"AV",
-				"AV_CODEC_CAP_DELAY"
 			]
 		]
 	},
@@ -591,8 +591,12 @@
 	},
 	"file_history":
 	[
-		"/E/Code/C/hex/handleevents.h",
 		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
+		"/E/Code/C/hex/res/test.wav",
+		"/E/Code/C/hex/inc/xtrace.h",
+		"/E/Code/C/hex/wave.h",
+		"/E/Code/C/hex/audio.h",
+		"/E/Code/C/hex/handleevents.h",
 		"/E/Code/C/hex/res/hex.ico",
 		"/E/Code/C/hex/res/res.wav",
 		"/E/Programs/sublimetext/Data/Packages/User/hex_viewer.sublime-settings",
@@ -683,6 +687,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"ly",
 			"wavFile.data",
 			"find_all_results",
 			"hex.m",
@@ -825,7 +830,7 @@
 	},
 	"output.hex_viewer_inspector":
 	{
-		"height": 96.0
+		"height": 115.0
 	},
 	"pinned_build_system": "Packages/User/Batch File.sublime-build",
 	"replace":
@@ -840,16 +845,40 @@
 		"selected_items":
 		[
 			[
+				"hean",
+				"handleevents.h"
+			],
+			[
 				"hex",
 				"hex.cpp"
 			],
 			[
-				"wav",
+				"x",
+				"inc\\xtrace.h"
+			],
+			[
+				"xt",
+				"inc\\xtrace.h"
+			],
+			[
+				"au",
+				"audio.h"
+			],
+			[
+				"wa",
 				"wave.h"
+			],
+			[
+				"aui",
+				"audio.h"
 			],
 			[
 				"hand",
 				"handleevents.h"
+			],
+			[
+				"wav",
+				"wave.h"
 			],
 			[
 				"color",
@@ -862,10 +891,6 @@
 			[
 				"dra",
 				"drawing.h"
-			],
-			[
-				"au",
-				"audio.h"
 			],
 			[
 				"h",
@@ -1006,10 +1031,6 @@
 			[
 				"git",
 				".gitignore"
-			],
-			[
-				"xt",
-				"xtrace.h"
 			]
 		],
 		"width": 0.0

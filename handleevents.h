@@ -14,7 +14,7 @@ struct Mouse
 bool insideWaveRect;
 
 void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_Music *music, 
-                  float32 *cursor)
+                  float32 *cursor, SDL_Rect *wavRect)
 {
   SDL_GetMouseState(&mouse->x, &mouse->y);
   SDL_Event event;
@@ -92,7 +92,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_a:
           {
-            
+            if(wavRect->w > Window_Width - 100) wavRect->w -= 100;
           } break;
           case SDLK_b:
           {
@@ -147,7 +147,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_s:
           {
-            
+            if(wavRect->w < 10000) wavRect->w += 100;            
           } break;
           case SDLK_t:
           {

@@ -25,7 +25,7 @@ void setPixel(SDL_Surface *surface, const int32 x, const int32 y, const uint32 c
   }
 }
 
-const char *getBlendMode(SDL_Surface *surface)
+const char *getBlendModeString(SDL_Surface *surface)
 {
   SDL_BlendMode bm;
   SDL_GetSurfaceBlendMode(surface, &bm);
@@ -36,7 +36,7 @@ const char *getBlendMode(SDL_Surface *surface)
   else return "???";
 }
 
-void DrawTextToSurface(SDL_Surface *dest, int x, int y, const char *text, 
+void drawTextToSurface(SDL_Surface *dest, int x, int y, const char *text, 
                        TTF_Font *font, SDL_Color color)
 {
   SDL_Surface *surface;
@@ -76,9 +76,9 @@ void line(SDL_Surface *surface, const uint32 x1, const uint32 y1, const uint32 x
     else if (h > 0) dy2 = 1;
     dx2 = 0;
   }
-  int numerator = longest >> 1 ;
+  int numerator = longest >> 1;
   for (int i = 0; i <= longest; ++i) {
-    setPixel(surface, x, y,color);
+    setPixel(surface, x, y, color);
     numerator += shortest;
     if (!(numerator < longest)) {
       numerator -= longest;
@@ -132,8 +132,6 @@ void hline(SDL_Surface *surface, const int32 x1, const int32 x2, const uint32 y,
     setPixel(surface, i, y, color);
   }
 }
-
-
 
 uint32 createRandomColor()
 {

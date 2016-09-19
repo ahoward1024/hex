@@ -9,6 +9,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "drawing.h"
 
 struct WAVFile
 {
@@ -215,8 +218,8 @@ internal inline void printWAVFile(WAVFile wav)
     printf("\t%c%c%c%c\n", wav.dataChunk[0], wav.dataChunk[1], wav.dataChunk[2], wav.dataChunk[3]);
     printf("\tData size: %d\n", wav.dataSize);
   printf("COUNTS:\n");
-    printf("\tNumber of samples: %d\n", wav.numSamples);
-    printf("\tSample size: %d\n", wav.sampleSize);
+    printf("\tNumber of samples: %llu\n", wav.numSamples);
+    printf("\tSample size: %llu\n", wav.sampleSize);
     printf("\tDuration in seconds: %.4f\n", wav.duration);
     printf("\tDuration in time: %s\n", seconds_to_time(wav.duration));
     printf("\tMax left sample: %d\n", wav.maxLeft);
