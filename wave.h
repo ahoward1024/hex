@@ -11,7 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "drawing.h"
+#include "SDL2/SDL2_sgfxPrimitives.h"
+
+#include "mathfuncs.h"
+
+// NOTE: Surfaces are in 0xRRGGBBAA format
+const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; // Light green
+const uint32 COLOR_RIGHTCHANNEL = 0xFF8080FF; // Light red
+
 
 struct WAVFile
 {
@@ -46,98 +53,89 @@ struct WAVFile
   int32   *data;
 };
 
-SDL_Surface * WAV_createSurface(WAVFile wav, int height)
+#if 0
+// Bezier method
+SDL_Surface *WAV_createSurface(WAVFile wav, int height)
 {
-  int h = (height / 2);
-  int slices = 2048;
+
+}
+#endif
+
+#if 1
+// Rectangle method
+SDL_Surface *WAV_createSurface(WAVFile wav, int height)
+{
+  int h = height / 2;
+  int slices = 1024;
   int chunks = wav.numFrames / slices;
+
   printf("chunks: %d\n", chunks);
 
-  int *lcMaxCache = (int *)calloc(chunks, sizeof(int));
-  int *lcMinCache = (int *)calloc(chunks, sizeof(int));
-  int *rcMaxCache = (int *)calloc(chunks, sizeof(int));
-  int *rcMinCache = (int *)calloc(chunks, sizeof(int));
-
-  int16 lmax = SHRT_MIN;
-  int16 rmax = SHRT_MIN;
-  int16 lmin = SHRT_MAX;
-  int16 rmin = SHRT_MAX;
-
-  int inc = 0;
-  int rset = 0;
-  for(int i = 0; i < wav.numFrames; ++i)
-  {
-    int32 s = wav.data[i];
-    // The wave format is as follows:
-    // 0x UB LB
-    //    LC RC
-    // But because of little endianness we need to flip these so the left channel becomes
-    // the lower bits, and the right channel the upper bits.
-    int16 r = s >> 16;
-    int16 l = s & 0xFFFF;
-
-    // Thanks! https://graphics.stanford.edu/~seander/bithacks.html
-    lmax = l ^ ((l ^ lmax) & -(l < lmax));
-    rmax = r ^ ((r ^ rmax) & -(r < rmax));
-    lmin = lmin ^ ((l ^ lmin) & -(l < lmin));
-    rmin = rmin ^ ((r ^ rmin) & -(r < rmin));
-    if(rset == slices)
-    {
-      lcMaxCache[inc] = lmax * ((h / 2) - 10) / wav.maxLeft;
-      lcMinCache[inc] = lmin * ((h / 2) - 10) / wav.minLeft;
-      rcMaxCache[inc] = rmax * ((h / 2) - 10) / wav.maxRight;
-      rcMinCache[inc] = rmin * ((h / 2) - 10) / wav.minRight;
-
-      lmax = SHRT_MIN;
-      rmax = SHRT_MIN;
-      lmin = SHRT_MAX;
-      rmin = SHRT_MAX;
-
-      ++inc;
-      rset = 0;
-    }
-    else
-    {
-      ++rset;
-    }
-  }
-
-  SDL_Surface *surface = SDL_CreateRGBSurface(0, inc, height, 32, 
+  SDL_Surface *surface = SDL_CreateRGBSurface(0, chunks, height, 32,
+                                              0xFF000000,
                                               0x00FF0000,
                                               0x0000FF00,
-                                              0x000000FF,
-                                              0xFF000000);
+                                              0x000000FF);
   if(!surface)
   {
     printf("Could not create wav surface.\n");
     printf("%s\n", SDL_GetError());
     return surface;
   }
-  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+  // SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
-  for(int x = 0; x < surface->w; ++x)
+  int startl = h / 2;
+  int startr = surface->h - (h / 2);
+  int res = 0;
+  int16 lmax = SHRT_MIN;
+  int16 rmax = SHRT_MIN;
+  int x = 0;
+  for(int i = 0; i < wav.numFrames; ++i)
   {
-    int16 lpmax = lcMaxCache[x];
-    int16 lpmin = lcMinCache[x];
-    int16 rpmax = rcMaxCache[x];
-    int16 rpmin = rcMinCache[x];
+    int32 sample = wav.data[i];
+    int16 l = abs(sample & 0xFFFF);
+    int16 r = abs(sample >> 16);
 
-    vline(surface, (h / 2) + lpmax, (h / 2) - lpmin, x, COLOR_LEFTCHANNEL);
-    vline(surface, (surface->h - (h / 2)) + rpmax, (surface->h - (h / 2)) - rpmin, x, 
-          COLOR_RIGHTCHANNEL);
+    lmax = maximum(l, lmax);
+    rmax = maximum(r, rmax);
+
+    if(res == slices)
+    {
+
+      int ly = lmax * (h / 2) / 0x7FFF;
+      int ry = rmax * (h / 2) / 0x7FFF;
+
+      int llyp = startl + ly;
+      int rryp = startr + ry;
+      int llyn = startl - ly;
+      int rryn = startr - ry;
+
+      svlineColor(surface, x, startl, llyp, 0xFF8080FF);
+      svlineColor(surface, x, startl, llyn, 0xFF8080FF);
+
+      svlineColor(surface, x, startr, rryp, 0x80FF80FF);
+      svlineColor(surface, x, startr, rryn, 0x80FF80FF);
+
+      lmax = SHRT_MIN;
+      rmax = SHRT_MIN;
+
+      ++x;
+      res = 0;
+    }
+    else
+    {
+      ++res;
+    }
   }
 
-  hline(surface, 0, surface->w, surface->h / 2, COLOR_BLACK);
-  hline(surface, 0, surface->w, surface->h / 4, COLOR_LIGHTLINE);
-  hline(surface, 0, surface->w, surface->h - (surface->h / 4), COLOR_LIGHTLINE);
-
-  free(lcMaxCache);
-  free(lcMinCache);
-  free(rcMaxCache);
-  free(rcMinCache);
+  shlineColor(surface, 0, surface->w, h, 0x000000FF);
+  shlineColor(surface, 0, surface->w, h / 2, 0x4A4A4AFF);
+  shlineColor(surface, 0, surface->w, height - (h / 2), 0x4A4A4AFF);
 
   return surface;
 }
+#endif
 
 SDL_Texture *WAV_createTexture(SDL_Renderer *renderer, WAVFile wav, int height)
 {

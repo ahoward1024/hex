@@ -9,7 +9,8 @@
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_mixer.h"
-#include "SDL2/SDL_gfxPrimitives.h"
+#include "SDL2/SDL2_gfxPrimitives.h"
+#include "SDL2/SDL2_sgfxPrimitives.h"
 
 #define  XTRACE_REPLACE
 #include "xtrace.h"
@@ -18,9 +19,10 @@
 #include "colors.h"
 #include "timer.h"
 
-#include "resource.h"
 
-internal const char *musicFileName = "../res/test_db2.wav";
+#include "mathfuncs.h"
+
+internal const char *musicFileName = "../res/res.wav";
 
 // ======== GLOBALS ======== //
 global bool Global_running = true;
@@ -44,8 +46,6 @@ global float64 zoom = 1.0f;
 
 // ======== CUSTOM COLORS ======== //
 global const uint32 COLOR_BACKGROUNDC  = 0xFF1F1F1F; // Dark grey
-global const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; // Light green
-global const uint32 COLOR_RIGHTCHANNEL = 0xFFFF8080; // Light red
 global const uint32 COLOR_LIGHTLINE    = 0xFF4A4A4A; // Light grey
 global const uint32 COLOR_VUAVG        = 0xFF00FF00; // Bright green
 global const uint32 COLOR_VUPEAK       = 0xFF009600; // Dark green
@@ -62,18 +62,7 @@ internal int16 maxSampleL = SHRT_MAX;
 internal int16 maxSampleR = SHRT_MAX;
 
 #include "wave.h"
-
 #include "handleevents.h"
-
-inline int minimum(int x, int y)
-{
-  return y ^ ((x ^ y) & -(x < y));
-}
-
-inline int maximum(int x, int y)
-{
-  return x ^ ((x ^ y) & -(x < y));
-}
 
 void AudioPostMix(void *udata, uint8 *stream, int len)
 {
@@ -158,8 +147,8 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   // SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(windowSurface);
   int rendererFlags = SDL_RENDERER_ACCELERATED;
-  // rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
-  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, rendererFlags);
 
   if(!renderer)
   {
@@ -259,9 +248,10 @@ int main(int argc, char **argv)
   const int boxw = 16;
   const int leftx = Window_Width - 36;
   const int rightx = (Window_Width - 36) + boxw + 4;
+
   do
   {
-    HandleEvents(renderer, window, &mouse, music, &cursor, &wavRect);
+    HandleEvents(renderer, window, &mouse, music, &cursor, wavTexture, &wavRect);
     SDL_SetRenderDrawColor(renderer, 31, 31, 31, 255);
     SDL_RenderClear(renderer);
 

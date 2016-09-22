@@ -4,11 +4,23 @@
 		"selected_items":
 		[
 			[
-				"maxP",
-				"maxPeakL"
+				"0xFF80",
+				"0xFF8080FF"
+			],
+			[
+				"SHRT",
+				"SHRT_MAX"
+			],
+			[
+				"WIndo",
+				"Window_Height"
 			],
 			[
 				"Win",
+				"Window_Width"
+			],
+			[
+				"W",
 				"Window_Width"
 			],
 			[
@@ -16,16 +28,32 @@
 				"Window_Width"
 			],
 			[
-				"WI",
-				"Window_Height"
+				"maxSa",
+				"maxSampleR"
 			],
 			[
-				"vuP",
-				"vuPeakRight"
+				"vuPAP",
+				"vuPAPRL"
 			],
 			[
 				"vu",
 				"vuPeakRight"
+			],
+			[
+				"vuP",
+				"vuPeakLeft"
+			],
+			[
+				"vuA",
+				"vuAvgRight"
+			],
+			[
+				"maxP",
+				"maxPeakL"
+			],
+			[
+				"WI",
+				"Window_Height"
 			],
 			[
 				"WIn",
@@ -42,10 +70,6 @@
 			[
 				"COLOR",
 				"COLOR_VUPEAKRED"
-			],
-			[
-				"vuA",
-				"vuAvgRight"
 			],
 			[
 				"vuAg",
@@ -77,10 +101,6 @@
 			],
 			[
 				"Wind",
-				"Window_Height"
-			],
-			[
-				"W",
 				"Window_Height"
 			],
 			[
@@ -122,10 +142,6 @@
 			[
 				"WIN",
 				"Window_Height"
-			],
-			[
-				"SHRT",
-				"SHRT_MAX"
 			],
 			[
 				"curs",
@@ -498,22 +514,6 @@
 			[
 				"_",
 				"_ptsListSize"
-			],
-			[
-				"PICT",
-				"PICTYPE"
-			],
-			[
-				"avcode",
-				"avcodec_decode_video2"
-			],
-			[
-				"pic",
-				"pict_type"
-			],
-			[
-				"pict",
-				"pict_type"
 			]
 		]
 	},
@@ -591,9 +591,16 @@
 	},
 	"file_history":
 	[
+		"/E/Code/C/hex/build.bat",
+		"/E/Code/C/hex/mathfuncs.h",
+		"/E/Code/C/hex/hex.aps",
+		"/E/Code/C/hex/inc/SDL2/SDL_sprig.h",
+		"/e/code/c/hex/inc/sdl2/sdl_spriginline.h",
+		"/e/code/c/hex/wave.h",
+		"/E/Code/C/hex/inc/xtrace.h",
+		"/E/Code/C/hex/drawing.h",
 		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
 		"/E/Code/C/hex/res/test.wav",
-		"/E/Code/C/hex/inc/xtrace.h",
 		"/E/Code/C/hex/wave.h",
 		"/E/Code/C/hex/audio.h",
 		"/E/Code/C/hex/handleevents.h",
@@ -603,7 +610,6 @@
 		"/E/Programs/sublimetext/Data/Packages/Highlight Build Errors/HighlightBuildErrors.py",
 		"/E/Programs/sublimetext/Data/Packages/User/HighlightBuildErrors.sublime-settings",
 		"/E/Programs/sublimetext/Data/Packages/sublime-text-2-buildview/commands.py",
-		"/E/Code/C/hex/build.bat",
 		"/E/Libs/ffmpeg/ffmpegsrc/ffplay.c",
 		"/E/Code/C/hex/hex.rc",
 		"/E/Code/handmade/code/handmade_generated.h",
@@ -677,9 +683,10 @@
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 92.0,
 		"where_history":
 		[
+			"<project>"
 		]
 	},
 	"find_state":
@@ -687,6 +694,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"SPG_Point",
+			"XTRACE",
+			"vuAvgR",
 			"ly",
 			"wavFile.data",
 			"find_all_results",
@@ -809,8 +819,8 @@
 		"cols":
 		[
 			0.0,
-			0.29015625,
-			0.65140625,
+			0.215546875,
+			0.610390625,
 			1.0
 		],
 		"rows":
@@ -845,19 +855,59 @@
 		"selected_items":
 		[
 			[
-				"hean",
-				"handleevents.h"
-			],
-			[
 				"hex",
 				"hex.cpp"
 			],
 			[
-				"x",
-				"inc\\xtrace.h"
+				"bu",
+				"build.bat"
+			],
+			[
+				"bui",
+				"build.bat"
+			],
+			[
+				"buil",
+				"build.bat"
+			],
+			[
+				"drawing",
+				"drawing.h"
+			],
+			[
+				"spirg",
+				"inc\\SDL2\\SDL_sprig.h"
 			],
 			[
 				"xt",
+				"inc\\xtrace.h"
+			],
+			[
+				"wav",
+				"wave.h"
+			],
+			[
+				"xtr",
+				"inc\\xtrace.h"
+			],
+			[
+				"aud",
+				"audio.h"
+			],
+			[
+				"drawin",
+				"drawing.h"
+			],
+			[
+				"hand",
+				"handleevents.h"
+			],
+			[
+				"hean",
+				"handleevents.h"
+			],
+			[
+				"x",
 				"inc\\xtrace.h"
 			],
 			[
@@ -871,14 +921,6 @@
 			[
 				"aui",
 				"audio.h"
-			],
-			[
-				"hand",
-				"handleevents.h"
-			],
-			[
-				"wav",
-				"wave.h"
 			],
 			[
 				"color",
@@ -903,18 +945,6 @@
 			[
 				"he",
 				"hex.cpp"
-			],
-			[
-				"bu",
-				"build.bat"
-			],
-			[
-				"buil",
-				"build.bat"
-			],
-			[
-				"bui",
-				"build.bat"
 			],
 			[
 				"dr",

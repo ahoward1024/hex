@@ -8,16 +8,42 @@ struct Mouse
   int x;
   int y;
   SDL_Point click = MOUSERESET;
-  bool ctoggle = false;
+  SDL_Point down  = MOUSERESET;
+  SDL_Point up    = MOUSERESET;
+  bool firstDown  = false;
 };
 
 bool insideWaveRect;
 
+bool mouseDown = false;
+bool inrect = false;
+
 void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_Music *music, 
-                  float32 *cursor, SDL_Rect *wavRect)
+                  float32 *cursor, SDL_Texture *wavTexture, SDL_Rect *wavRect)
 {
   SDL_GetMouseState(&mouse->x, &mouse->y);
   SDL_Event event;
+
+  if(mouseDown)
+  {
+    if(!mouse->firstDown)
+    {
+      mouse->click.x = mouse->x;
+      mouse->click.y = mouse->y;
+      mouse->firstDown = true;
+      if(SDL_PointInRect(&mouse->click, wavRect)) inrect = true;
+    }
+    if(inrect)
+    {
+      if(mouse->y > mouse->click.y)
+      {
+        int delta = mouse->y - mouse->click.y;
+        float32 perc = ((float)delta / 100.0f) * (Window_Width - 100);
+        wavRect->w = perc;
+      }
+    }
+  }
+
   if(SDL_PollEvent(&event))
   {
     switch(event.type)
@@ -31,12 +57,15 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
       } break;
       case SDL_MOUSEBUTTONDOWN:
       {
+        mouseDown = true;
       } break;
       case SDL_MOUSEBUTTONUP:
       {
         mouse->click = MOUSERESET;
-        mouse->ctoggle = false;
+        mouse->firstDown = false;
         insideWaveRect = false;
+        mouseDown = false;
+        inrect = false;
       } break;
       case SDL_MOUSEWHEEL:
       {
@@ -92,7 +121,6 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_a:
           {
-            if(wavRect->w > Window_Width - 100) wavRect->w -= 100;
           } break;
           case SDLK_b:
           {
@@ -147,7 +175,6 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_s:
           {
-            if(wavRect->w < 10000) wavRect->w += 100;            
           } break;
           case SDLK_t:
           {
@@ -197,6 +224,37 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
             Global_paused = true;
           } break;
         }
+      } break;
+      case SDL_DROPFILE:
+      {
+        char *filename = event.drop.file;
+        printf("Dropped file: %s\n", filename);
+        int len = strlen(filename);
+        printf("Len: %d\n", len);
+        char ext[3];
+        ext[0] = filename[len-3];
+        ext[1] = filename[len-2];
+        ext[2] = filename[len-1];
+        printf("ext: %s\n", ext);
+        if(!strcmp(ext, "wav"))
+        {
+          WAVFile file = WAV_openFile(filename);
+          SDL_UpdateTexture(wavTexture, NULL, NULL, 0);
+          SDL_Surface  *surface = WAV_createSurface(file, Window_Height - 20);
+          SDL_UpdateTexture(wavTexture, NULL, surface->pixels, surface->pitch);
+          WAV_closeFile(file);
+          int w = 0, h = 0;
+          SDL_QueryTexture(wavTexture, NULL, NULL, &w, &h);
+          wavRect->x = 10;
+          wavRect->y = 10;
+          wavRect->w = w;
+          wavRect->h = h;
+        }
+        else
+        {
+          printf("Not a goddamn wave!!\n");
+        }
+        SDL_free(filename);
       } break;
     }
   }

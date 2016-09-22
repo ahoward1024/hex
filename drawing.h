@@ -16,15 +16,6 @@ inline void clear(SDL_Renderer *renderer)
   SDL_RenderClear(renderer);
 }
 
-void setPixel(SDL_Surface *surface, const int32 x, const int32 y, const uint32 color)
-{
-  if(x > 0 && y > 0 && x < surface->w  && y < surface->h)
-  {
-    uint32 *pixels = (uint32 *)surface->pixels;
-    pixels[(y * surface->w) + x] = color;
-  }
-}
-
 const char *getBlendModeString(SDL_Surface *surface)
 {
   SDL_BlendMode bm;
@@ -53,83 +44,6 @@ void drawTextToSurface(SDL_Surface *dest, int x, int y, const char *text,
   else
   {
     printf("TTF error.\n%s\n", TTF_GetError());
-  }
-}
-
-void line(SDL_Surface *surface, const uint32 x1, const uint32 y1, const uint32 x2, const uint32 y2, 
-          const uint32 color)
-{
-  int32 x = (int32)x1;
-  int32 y = (int32)y1;
-  int32 w = x2 - x;
-  int32 h = y2 - y;
-  int32 dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
-  if (w < 0) dx1 = -1 ; else if (w > 0) dx1 = 1;
-  if (h < 0) dy1 = -1 ; else if (h > 0) dy1 = 1;
-  if (w < 0) dx2 = -1 ; else if (w > 0) dx2 = 1;
-  int32 longest = abs(w) ;
-  int32 shortest = abs(h) ;
-  if (!(longest > shortest)) {
-    longest = abs(h);
-    shortest = abs(w);
-    if (h < 0) dy2 = -1; 
-    else if (h > 0) dy2 = 1;
-    dx2 = 0;
-  }
-  int numerator = longest >> 1;
-  for (int i = 0; i <= longest; ++i) {
-    setPixel(surface, x, y, color);
-    numerator += shortest;
-    if (!(numerator < longest)) {
-      numerator -= longest;
-      x += dx1;
-      y += dy1;
-    } else {
-      x += dx2;
-      y += dy2;
-    }
-  }
-}
-
-void vline(SDL_Surface *surface, const int32 y1, const int32 y2, const uint32 x, 
-           const uint32 color)
-{
-  if(y2 == y1) return;
-  int32 begin, end;
-  if(y2 > y1) 
-  {
-    begin = y1;
-    end = y2;
-  }
-  else
-  {
-    begin = y2;
-    end = y1;
-  }
-  for(int32 i = begin; i <= end; ++i)
-  {
-    setPixel(surface, x, i, color);
-  }
-}
-
-void hline(SDL_Surface *surface, const int32 x1, const int32 x2, const uint32 y, 
-           const uint32 color)
-{
-  if(x1 == x2) return;
-  int32 begin, end;
-  if(x2 > x1)
-  {
-    begin = x1;
-    end = x2;
-  }
-  else
-  {
-    begin = x2;
-    end = x1;
-  }
-  for(int32 i = begin; i <= end; ++i)
-  {
-    setPixel(surface, i, y, color);
   }
 }
 
