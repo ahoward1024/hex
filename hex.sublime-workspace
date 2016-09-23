@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"Win",
+				"Window_Height"
+			],
+			[
+				"Window",
+				"Window_Width"
+			],
+			[
+				"Windo",
+				"Window_Height"
+			],
+			[
+				"CO",
+				"COLOR_LIGHTLINE"
+			],
+			[
+				"WIn",
+				"Window_Height"
+			],
+			[
 				"0xFF80",
 				"0xFF8080FF"
 			],
@@ -16,15 +36,7 @@
 				"Window_Height"
 			],
 			[
-				"Win",
-				"Window_Width"
-			],
-			[
 				"W",
-				"Window_Width"
-			],
-			[
-				"Window",
 				"Window_Width"
 			],
 			[
@@ -54,10 +66,6 @@
 			[
 				"WI",
 				"Window_Height"
-			],
-			[
-				"WIn",
-				"Window_Width"
 			],
 			[
 				"vuPe",
@@ -304,10 +312,6 @@
 				"uint32"
 			],
 			[
-				"Windo",
-				"Window_Height"
-			],
-			[
 				"SDL_Render",
 				"SDL_RenderClear"
 			],
@@ -510,10 +514,6 @@
 			[
 				"ptsL",
 				"ptsListSorted"
-			],
-			[
-				"_",
-				"_ptsListSize"
 			]
 		]
 	},
@@ -540,7 +540,7 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 375.0,
+		"height": 260.0,
 		"last_filter": "open",
 		"selected_items":
 		[
@@ -576,6 +576,8 @@
 		"height": 410.0,
 		"history":
 		[
+			"clear",
+			"celar",
 			"reload",
 			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
 		]
@@ -591,6 +593,9 @@
 	},
 	"file_history":
 	[
+		"/E/Programs/sublimetext/Data/Packages/C++/C.sublime-syntax",
+		"/E/Code/C/hex/C++/C.sublime-syntax",
+		"/E/Programs/sublimetext/Data/Packages/C++/C++.sublime-syntax",
 		"/E/Code/C/hex/build.bat",
 		"/E/Code/C/hex/mathfuncs.h",
 		"/E/Code/C/hex/hex.aps",
@@ -644,7 +649,6 @@
 		"/E/Code/C/mouse/mouse.sublime-project",
 		"/E/Code/C/mouse/xtrace.h",
 		"/E/Code/C/mouse/savetodisk.h",
-		"/E/Programs/sublimetext/Data/Packages/C++/C.sublime-syntax",
 		"/E/Code/C/mouse/bin/lib/avcodec-57.def",
 		"/E/Libs/ffmpeg/ffmpeg/lib/bread.def",
 		"/E/Libs/ffmpeg/ffmpeg/lib/avcodec-57.def",
@@ -679,7 +683,7 @@
 	],
 	"find":
 	{
-		"height": 36.0
+		"height": 21.0
 	},
 	"find_in_files":
 	{
@@ -694,6 +698,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"settings",
 			"SPG_Point",
 			"XTRACE",
 			"vuAvgR",
@@ -718,7 +723,7 @@
 			"totalFrames",
 			"frame",
 			"Global_play",
-			"#ifndef UI_H\n#define UI_H\n\n#include \"video.h\"\n\nstruct ViewRects\n{\n	SDL_Rect background;\n	SDL_Rect timeline;\n};\n\nvoid layoutWindowElements(SDL_Window *window, ViewRects *views, VideoClip *clip)\n{\n	const int bufferSpace = 100;\n\n	int windowWidth, windowHeight, backW, backH, videoW, videoH;\n\n	SDL_GetWindowSize(window, &windowWidth, &windowHeight);\n\n\n	// Find the nearest 16x9 (STC) resolution to fit the composite views into\n	// STC: Need to make the aspect ratio the aspect ratio of the output composition.\n	if(windowWidth < )\n	for(int w = 0, h = 0; \n	    w < (windowWidth - bufferSpace) && h < (windowHeight - (bufferSpace * 2));\n	    w += 16, h += 9)\n	{\n		backW = w;\n		backH = h;\n	}\n\n	// Fit the current view background into an output aspect ratio in the top middle\n	views->background.w = backW;\n	views->background.h = backH;\n	views->background.x = (windowWidth / 2) - (backW / 2);\n	views->background.y = (windowHeight / 2) - (backH / 2) - (bufferSpace);\n\n	// (??? STC ???) <\n	// If the clip is bigger than the back views then we just resize it to be the back view\n	// and \"fit it to frame\". Otherwise we keep the Global_VideoClip at it's original size.\n	// NOTE: We may want to test this, perhaps clips that are bigger than the size of the wanted\n	// composite should be clipped outside of the composite... \n	if(clip->vfile->width > backW || clip->vfile->height > backH)\n	{\n		// Find the nearest rectangle to fit the clip's aspect ratio into the view backgrounds\n		for(int w = 0, h = 0; \n		    w <= backW && h <= backH; \n		    w += clip->vfile->aspectRatioW, h += clip->vfile->aspectRatioH)\n		{\n			videoW = w;\n			videoH = h;\n		}\n	}\n	else\n	{\n		videoW = clip->vfile->codecCtx->width;\n		videoH = clip->vfile->codecCtx->height;\n	}\n	// (??? STC ???)) >\n\n	// Put the composite clip view on the left hand side and center it in the composite \n	// view background\n	clip->videoRect.w = videoW;\n	clip->videoRect.h = videoH;\n	clip->videoRect.x = views->background.x + \n	((views->background.w - clip->videoRect.w) / 2);\n	clip->videoRect.y = views->background.y + \n	((views->background.h - clip->videoRect.h) / 2);\n\n	// Put the timeline clip view in the bottom part of the screen under the video\n	views->timeline.x = 10;\n	views->timeline.y = views->background.h + 20;\n	views->timeline.w = (windowWidth) - (10 * 2);\n	views->timeline.h = (windowHeight - views->timeline.y) - 10;\n}\n\nvoid setVideoClipPosition(SDL_Window *window, VideoClip *clip, int x, int y)\n{\n	int width, height;\n	SDL_GetWindowSize(window, &width, &height);\n	if(x < 0 || y < 0 || x > width || y > height) return;\n	clip->videoRect.x = x;\n	clip->videoRect.y = y;\n}\n\nvoid setRenderColorAlpha(SDL_Renderer *r, tColor c, uint8 alpha)\n{\n	SDL_SetRenderDrawColor(r, c.r, c.b, c.g, alpha);\n}\n\nvoid setRenderColor(SDL_Renderer *r, tColor c)\n{\n	SDL_SetRenderDrawColor(r, c.r, c.b, c.g, c.a);\n}\n\n#endif",
+			"#ifndef UI_H\n#define UI_H\n\n#include \"video.h\"\n\nstruct ViewRects\n{\n\tSDL_Rect background;\n\tSDL_Rect timeline;\n};\n\nvoid layoutWindowElements(SDL_Window *window, ViewRects *views, VideoClip *clip)\n{\n\tconst int bufferSpace = 100;\n\n\tint windowWidth, windowHeight, backW, backH, videoW, videoH;\n\n\tSDL_GetWindowSize(window, &windowWidth, &windowHeight);\n\n\n\t// Find the nearest 16x9 (STC) resolution to fit the composite views into\n\t// STC: Need to make the aspect ratio the aspect ratio of the output composition.\n\tif(windowWidth < )\n\tfor(int w = 0, h = 0; \n\t    w < (windowWidth - bufferSpace) && h < (windowHeight - (bufferSpace * 2));\n\t    w += 16, h += 9)\n\t{\n\t\tbackW = w;\n\t\tbackH = h;\n\t}\n\n\t// Fit the current view background into an output aspect ratio in the top middle\n\tviews->background.w = backW;\n\tviews->background.h = backH;\n\tviews->background.x = (windowWidth / 2) - (backW / 2);\n\tviews->background.y = (windowHeight / 2) - (backH / 2) - (bufferSpace);\n\n\t// (??? STC ???) <\n\t// If the clip is bigger than the back views then we just resize it to be the back view\n\t// and \"fit it to frame\". Otherwise we keep the Global_VideoClip at it's original size.\n\t// NOTE: We may want to test this, perhaps clips that are bigger than the size of the wanted\n\t// composite should be clipped outside of the composite... \n\tif(clip->vfile->width > backW || clip->vfile->height > backH)\n\t{\n\t\t// Find the nearest rectangle to fit the clip's aspect ratio into the view backgrounds\n\t\tfor(int w = 0, h = 0; \n\t\t    w <= backW && h <= backH; \n\t\t    w += clip->vfile->aspectRatioW, h += clip->vfile->aspectRatioH)\n\t\t{\n\t\t\tvideoW = w;\n\t\t\tvideoH = h;\n\t\t}\n\t}\n\telse\n\t{\n\t\tvideoW = clip->vfile->codecCtx->width;\n\t\tvideoH = clip->vfile->codecCtx->height;\n\t}\n\t// (??? STC ???)) >\n\n\t// Put the composite clip view on the left hand side and center it in the composite \n\t// view background\n\tclip->videoRect.w = videoW;\n\tclip->videoRect.h = videoH;\n\tclip->videoRect.x = views->background.x + \n\t((views->background.w - clip->videoRect.w) / 2);\n\tclip->videoRect.y = views->background.y + \n\t((views->background.h - clip->videoRect.h) / 2);\n\n\t// Put the timeline clip view in the bottom part of the screen under the video\n\tviews->timeline.x = 10;\n\tviews->timeline.y = views->background.h + 20;\n\tviews->timeline.w = (windowWidth) - (10 * 2);\n\tviews->timeline.h = (windowHeight - views->timeline.y) - 10;\n}\n\nvoid setVideoClipPosition(SDL_Window *window, VideoClip *clip, int x, int y)\n{\n\tint width, height;\n\tSDL_GetWindowSize(window, &width, &height);\n\tif(x < 0 || y < 0 || x > width || y > height) return;\n\tclip->videoRect.x = x;\n\tclip->videoRect.y = y;\n}\n\nvoid setRenderColorAlpha(SDL_Renderer *r, tColor c, uint8 alpha)\n{\n\tSDL_SetRenderDrawColor(r, c.r, c.b, c.g, alpha);\n}\n\nvoid setRenderColor(SDL_Renderer *r, tColor c)\n{\n\tSDL_SetRenderDrawColor(r, c.r, c.b, c.g, c.a);\n}\n\n#endif",
 			"process_frame",
 			"do_read_frames",
 			"process_frame",
@@ -759,6 +764,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"Settings",
 			"point",
 			"",
 			"r, g, b, a",
@@ -787,7 +793,7 @@
 	},
 	"incremental_find":
 	{
-		"height": 23.0
+		"height": 21.0
 	},
 	"input":
 	{
@@ -845,7 +851,7 @@
 	"pinned_build_system": "Packages/User/Batch File.sublime-build",
 	"replace":
 	{
-		"height": 64.0
+		"height": 38.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -855,8 +861,32 @@
 		"selected_items":
 		[
 			[
+				"wav",
+				"wave.h"
+			],
+			[
+				"draw",
+				"drawing.h"
+			],
+			[
+				"audi",
+				"audio.h"
+			],
+			[
+				"hand",
+				"handleevents.h"
+			],
+			[
 				"hex",
 				"hex.cpp"
+			],
+			[
+				"he",
+				"hex.cpp"
+			],
+			[
+				"ha",
+				"handleevents.h"
 			],
 			[
 				"bu",
@@ -883,10 +913,6 @@
 				"inc\\xtrace.h"
 			],
 			[
-				"wav",
-				"wave.h"
-			],
-			[
 				"xtr",
 				"inc\\xtrace.h"
 			],
@@ -897,10 +923,6 @@
 			[
 				"drawin",
 				"drawing.h"
-			],
-			[
-				"hand",
-				"handleevents.h"
 			],
 			[
 				"hean",
@@ -941,10 +963,6 @@
 			[
 				"colo",
 				"inc\\colors.h"
-			],
-			[
-				"he",
-				"hex.cpp"
 			],
 			[
 				"dr",

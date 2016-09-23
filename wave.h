@@ -52,14 +52,8 @@ struct WAVFile
   // STREAM
   int32   *data;
 };
-
-#if 0
-// Bezier method
-SDL_Surface *WAV_createSurface(WAVFile wav, int height)
-{
-
-}
-#endif
+  
+//TODO: Switch to using the renderer's pixel format for surfaces/textures
 
 #if 1
 // Rectangle method
@@ -68,8 +62,6 @@ SDL_Surface *WAV_createSurface(WAVFile wav, int height)
   int h = height / 2;
   int slices = 1024;
   int chunks = wav.numFrames / slices;
-
-  printf("chunks: %d\n", chunks);
 
   SDL_Surface *surface = SDL_CreateRGBSurface(0, chunks, height, 32,
                                               0xFF000000,
@@ -82,8 +74,8 @@ SDL_Surface *WAV_createSurface(WAVFile wav, int height)
     printf("%s\n", SDL_GetError());
     return surface;
   }
-  // SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
-  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
+  SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+  //SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
 
   int startl = h / 2;
   int startr = surface->h - (h / 2);
@@ -111,11 +103,11 @@ SDL_Surface *WAV_createSurface(WAVFile wav, int height)
       int llyn = startl - ly;
       int rryn = startr - ry;
 
-      svlineColor(surface, x, startl, llyp, 0xFF8080FF);
-      svlineColor(surface, x, startl, llyn, 0xFF8080FF);
+      svlineColor(surface, x, startl, llyp, 0x80FF80FF);
+      svlineColor(surface, x, startl, llyn, 0x80FF80FF);
 
-      svlineColor(surface, x, startr, rryp, 0x80FF80FF);
-      svlineColor(surface, x, startr, rryn, 0x80FF80FF);
+      svlineColor(surface, x, startr, rryp, 0xFF8080FF);
+      svlineColor(surface, x, startr, rryn, 0xFF8080FF);
 
       lmax = SHRT_MIN;
       rmax = SHRT_MIN;
@@ -129,8 +121,8 @@ SDL_Surface *WAV_createSurface(WAVFile wav, int height)
     }
   }
 
-  shlineColor(surface, 0, surface->w, h, 0x000000FF);
   shlineColor(surface, 0, surface->w, h / 2, 0x4A4A4AFF);
+  shlineColor(surface, 0, surface->w, h, 0x000000FF);
   shlineColor(surface, 0, surface->w, height - (h / 2), 0x4A4A4AFF);
 
   return surface;

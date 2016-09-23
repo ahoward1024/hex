@@ -33,6 +33,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
       mouse->firstDown = true;
       if(SDL_PointInRect(&mouse->click, wavRect)) inrect = true;
     }
+    #if 0
     if(inrect)
     {
       if(mouse->y > mouse->click.y)
@@ -42,6 +43,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
         wavRect->w = perc;
       }
     }
+    #endif
   }
 
   if(SDL_PollEvent(&event))

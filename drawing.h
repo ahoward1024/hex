@@ -59,4 +59,11 @@ uint32 createRandomColor()
   return color;
 }
 
+uint8 colorClamp(uint8 color)
+{
+  if(color < 0) return 0;
+  if(color > 255) return 255;
+  return color;
+}
+
 #endif

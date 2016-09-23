@@ -63,6 +63,11 @@ internal int16 maxSampleR = SHRT_MAX;
 
 #include "wave.h"
 #include "handleevents.h"
+#include "drawing.h"
+
+Sint16 *bufferl;
+Sint16 *bufferr;
+int bsize = 8192;
 
 void AudioPostMix(void *udata, uint8 *stream, int len)
 {
@@ -70,6 +75,10 @@ void AudioPostMix(void *udata, uint8 *stream, int len)
   float64 sumr = 0.0;
   float64 maxl = FLT_MIN;
   float64 maxr = FLT_MIN;
+  int x = 0;
+  int h = Window_Height / 2;
+  int startl = h - (h / 2);
+  int startr = Window_Height - (h / 2);
   for(int i = 0; i < len; ++i)
   {
     int16 l = abs((stream[i] << 8) | (stream[++i]));
@@ -80,6 +89,12 @@ void AudioPostMix(void *udata, uint8 *stream, int len)
     sumr += (ra * ra);
     maxl = maximum(l, maxl);
     maxr = maximum(r, maxr);
+
+    int lll = l * (h / 2) / 0x7FFF;
+    int rrr = r * (h / 2) / 0x7FFF;
+    bufferl[x] = lll;
+    bufferr[x] = rrr;
+    ++x;
   }
   maxl = (maxl * maxl) / 32768.0;
   maxr = (maxr * maxr) / 32768.0;
@@ -147,7 +162,7 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   // SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(windowSurface);
   int rendererFlags = SDL_RENDERER_ACCELERATED;
-  rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
+  // rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, rendererFlags);
 
   if(!renderer)
@@ -183,7 +198,7 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   WAVFile wavFile = WAV_openFile(musicFileName);
   printWAVFile(wavFile);
-  SDL_Texture *wavTexture = WAV_createTexture(renderer, wavFile, Window_Height - 20);
+  SDL_Texture *wavTexture = WAV_createTexture(renderer, wavFile, Window_Height);
   SDL_SetTextureBlendMode(wavTexture, SDL_BLENDMODE_BLEND);
   maxSampleL = wavFile.maxLeft;
   maxSampleR = wavFile.maxRight;
@@ -216,7 +231,7 @@ int main(int argc, char **argv)
          audio_rate, format_str, audio_channels, bits);
   printf("End Audio\n\n");
   #endif
-  Mix_SetPostMix(AudioPostMix, NULL);
+  Mix_SetPostMix(AudioPostMix, renderer);
 
   // -----------------------------------------------------------------------------------------------
   TTF_Init();
@@ -242,12 +257,21 @@ int main(int argc, char **argv)
   Mouse mouse;
   int w, h;
   SDL_QueryTexture(wavTexture, NULL, NULL, &w, &h);
-  SDL_Rect wavRect = {10, 10, Window_Width - 100, h};
+  SDL_Rect wavRect = {0, 0, Window_Width - 100, h};
   const int DB = 100;
   const int zeroDB = (Window_Height - DB);
   const int boxw = 16;
   const int leftx = Window_Width - 36;
   const int rightx = (Window_Width - 36) + boxw + 4;
+
+  bufferl = (Sint16 *)calloc(bsize, sizeof(Sint16));
+  bufferr = (Sint16 *)calloc(bsize, sizeof(Sint16));
+
+  int hh = Window_Height / 2;
+  int startl = hh - (hh / 2);
+  int startr = Window_Height - (hh / 2);
+
+  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
   do
   {
@@ -256,6 +280,15 @@ int main(int argc, char **argv)
     SDL_RenderClear(renderer);
 
     SDL_RenderCopy(renderer, wavTexture, NULL, &wavRect);
+
+    if(bufferl[0] || bufferr[0])
+    {
+      for(int i = 0; i < bsize; ++i)
+      {
+        vlineColor(renderer, i, startl, startl + bufferl[i], 0xFF64FFFF);
+        vlineColor(renderer, i, startr, startr + bufferr[i], 0xFFFFFF64);
+      }
+    }
 
     // ==== VU ==== //
     boxColor(renderer, leftx, 0, leftx + boxw, Window_Height, COLOR_BLACK);
