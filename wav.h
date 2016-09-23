@@ -19,6 +19,8 @@
 const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; // Light green
 const uint32 COLOR_RIGHTCHANNEL = 0xFF8080FF; // Light red
 
+const int16 WAV_MAXSAMPLE = SHRT_MAX;
+const int16 WAV_MINSAMPLE = SHRT_MIN;
 
 struct WAVFile
 {
@@ -43,17 +45,10 @@ struct WAVFile
   // COUNTS
   uint64   numSamples;
   uint64   numFrames;
-  uint64   sampleSize;
   float64  duration;
-  int16    maxLeft;
-  int16    minLeft;
-  int16    maxRight;
-  int16    minRight;
-  // STREAM
+  // DATA
   int32   *data;
 };
-  
-//TODO: Switch to using the renderer's pixel format for surfaces/textures
 
 #if 1
 // Rectangle method
@@ -94,9 +89,8 @@ SDL_Surface *WAV_createSurface(WAVFile wav, int height)
 
     if(res == slices)
     {
-
-      int ly = lmax * (h / 2) / 0x7FFF;
-      int ry = rmax * (h / 2) / 0x7FFF;
+      int ly = lmax * (h / 2) / WAV_MAXSAMPLE;
+      int ry = rmax * (h / 2) / WAV_MAXSAMPLE;
 
       int llyp = startl + ly;
       int rryp = startr + ry;
@@ -146,9 +140,11 @@ SDL_Texture *WAV_createTexture(SDL_Renderer *renderer, WAVFile wav, int height)
 }
 
 /**
+ * Thanks to amit
+ * http://truelogic.org/wordpress/2015/09/04/parsing-a-wav-file-in-c/
  * Convert seconds into hh:mm:ss format
  * Params:
- *  seconds - seconds value
+ * seconds - seconds value
  * Returns: hms - formatted string
  **/
  char *seconds_to_time(float64 raw_seconds) {
@@ -188,7 +184,22 @@ internal inline const char *getWAVFormatType(uint32 fmtType)
   }
 }
 
-internal inline void printWAVFile(WAVFile wav)
+void printWAVFile(WAVFile wav)
+{
+  printf("\n<\n  WAVFile: %s\n", wav.filename);
+  printf("  Format type: %s\n", getWAVFormatType(wav.fmtType));
+  printf("  Channels: %d\n", wav.channels);
+  printf("  Sample rate: %d\n", wav.sampleRate);
+  printf("  Byte rate: %d\n", wav.byteRate);
+  printf("  Block align: %d\n", wav.blockAlign);
+  printf("  Bits per sample: %d\n", wav.bitsPerSample);
+  printf("  Number of samples: %d\n", wav.numSamples);
+  printf("  Duration in seconds: %.4f\n", wav.duration);
+  printf("  Duration in time: %s\n", seconds_to_time);
+  printf(">\n\n");
+}
+
+void printWAVFileFULL(WAVFile wav)
 {
   printf("<\nWAVFile: %s\n", wav.filename);
   printf("HEADER:\n");
@@ -209,13 +220,8 @@ internal inline void printWAVFile(WAVFile wav)
     printf("\tData size: %d\n", wav.dataSize);
   printf("COUNTS:\n");
     printf("\tNumber of samples: %llu\n", wav.numSamples);
-    printf("\tSample size: %llu\n", wav.sampleSize);
     printf("\tDuration in seconds: %.4f\n", wav.duration);
     printf("\tDuration in time: %s\n", seconds_to_time(wav.duration));
-    printf("\tMax left sample: %d\n", wav.maxLeft);
-    printf("\tMin left sample: %d\n", wav.minLeft);
-    printf("\tMax right sample: %d\n", wav.maxRight);
-    printf("\tMin right sample: %d\n", wav.minRight);
   printf(">\n\n");
 }
 
@@ -232,17 +238,38 @@ internal inline uint32 littleToBig4(uint8 buffer[4])
 WAVFile WAV_openFile(const char *filename)
 {
   WAVFile wav = {0};
+  int len = strlen(filename);
+  char *ext = (char *)malloc(3 * sizeof(char));
+  ext[0] = filename[len-3];
+  ext[1] = filename[len-2];
+  ext[2] = filename[len-1];
+  if(strcmp(ext, "wav"))
+  {
+    printf("File does not have a .wav extention.\n");
+    return wav;
+  }
+  free(ext);
   wav.file = fopen(filename, "rb");
   if(wav.file)
   {
     uint8 buffer4[4];
     uint8 buffer2[2];
-    wav.filename = (char *)malloc(strlen(filename) * sizeof(char));
+    wav.filename = (char *)malloc(len * sizeof(char));
     strcpy(wav.filename, filename);
     fread(wav.riffChunk, 4, 1, wav.file);
+    if(strcmp((char *)wav.riffChunk, "RIFF"))
+    {
+      printf("Invalid WAV file. %s\n", filename);
+      return wav;
+    }
     fread(buffer4, 4, 1, wav.file);
     wav.overallSize = littleToBig4(buffer4);
     fread(wav.wave, 4, 1,  wav.file);
+    if(strcmp((char *)wav.wave, "WAVE"))
+    {
+      printf("Invalid WAV file. %s\n", filename);
+      return wav;
+    }
     fread(wav.fmtChunk, 4, 1, wav.file);
     fread(buffer4, 4, 1, wav.file);
     wav.fmtLength = littleToBig4(buffer4);
@@ -262,37 +289,17 @@ WAVFile WAV_openFile(const char *filename)
     fread(buffer4, 4, 1, wav.file);
     wav.dataSize = littleToBig4(buffer4);
 
-    wav.sampleSize = (wav.channels * wav.bitsPerSample) / 8;
     wav.duration = (float64)wav.overallSize / (float64)wav.byteRate;
     wav.numSamples = wav.dataSize / wav.channels;
-    wav.numFrames = wav.dataSize / 4;
+    wav.numFrames = wav.dataSize / sizeof(int32);
 
     wav.data = (int32 *)calloc(wav.numFrames, sizeof(int32));
     fread(wav.data, wav.dataSize, sizeof(int8), wav.file);
-
-    wav.maxLeft = SHRT_MIN;
-    wav.minLeft = SHRT_MAX;
-    wav.maxLeft = SHRT_MIN;
-    wav.minRight = SHRT_MAX;
-    for(int i = 0; i < wav.numFrames; ++i)
-    {
-      int32 s = wav.data[i];
-      int16 l = s >> 16;
-      int16 r = s & 0xFFFF;
-      // Thanks! https://graphics.stanford.edu/~seander/bithacks.html
-      wav.maxLeft = l ^ ((l ^ wav.maxLeft) & -(l < wav.maxLeft));
-      wav.minLeft = wav.minLeft ^ ((l ^ wav.minLeft) & -(l < wav.minLeft));
-      wav.maxRight = r ^ ((r ^ wav.maxRight) & -(l < wav.maxRight));
-      wav.minRight = wav.minRight ^ ((l ^ wav.minRight) & -(l < wav.minRight));
-    }
-    if(wav.maxLeft == 0) wav.maxLeft = SHRT_MAX;
-    if(wav.minLeft == 0) wav.minLeft = SHRT_MIN;
-    if(wav.maxRight == 0) wav.maxRight = SHRT_MAX;
-    if(wav.minRight == 0) wav.minRight = SHRT_MIN;
   }
   else
   {
     printf("Could not open file %s \n", filename);
+    return wav;
   }
 
   return wav;
