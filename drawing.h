@@ -47,6 +47,49 @@ void drawTextToSurface(SDL_Surface *dest, int x, int y, const char *text,
   }
 }
 
+SDL_Texture *createTextTexture(SDL_Renderer *renderer, const char *text, TTF_Font *font, SDL_Color color)
+{
+  SDL_Surface *surface;
+  SDL_Texture *texture = {0};
+  if(surface = TTF_RenderText_Blended(font, text, color))
+  {
+    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if(!texture)
+    {
+      printf("Error creating text texture.\n");
+    }
+    SDL_FreeSurface(surface);
+  }
+  else
+  {
+    printf("TTF error.\n%s\n", TTF_GetError());
+  }
+
+  return texture;
+}
+
+void drawTextToRenderer(SDL_Renderer *renderer, int x, int y, const char *text, 
+                        TTF_Font *font, SDL_Color color)
+{
+  SDL_Texture *texture = createTextTexture(renderer, text, font, color);
+  if(texture)
+  {
+    SDL_Rect rect;
+    rect.x = x;
+    rect.y = y;
+    int w = 0, h = 0;
+    SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+    rect.w = w;
+    rect.h = h;
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
+    SDL_DestroyTexture(texture);
+  }
+  else
+  {
+    printf("Could not render text texture. \n%s\n", text);
+  }
+}
+
 uint32 createRandomColor()
 {
   uint32 color;

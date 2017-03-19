@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <float.h>
 
+#include "resource.h"
+
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL_image.h"
@@ -19,7 +21,6 @@
 #include "colors.h"
 #include "timer.h"
 
-
 #include "mathfuncs.h"
 
 internal const char *musicFileName = "../res/res.wav";
@@ -27,6 +28,7 @@ internal const char *musicFileName = "../res/res.wav";
 // ======== GLOBALS ======== //
 global bool Global_running = true;
 global bool Global_paused = true;
+global SDL_Renderer *renderer;
 global const int Window_Width  = 1920;
 global const int Window_Height = 1080;
 global const int Half_WW = Window_Width / 2;
@@ -42,82 +44,99 @@ global int VOLUME = SDL_MIX_MAXVOLUME;
 global bool DELAY = false;
 global float32 cursor = 10.0f;
 global float64 zoom = 1.0f;
+global int hh = Window_Height / 2;
+global int startl = hh - (hh / 2);
+global int startr = Window_Height - (hh / 2);
+global SDL_Surface *bufferSurface;
 // ========================= //
 
 // ======== CUSTOM COLORS ======== //
 global const uint32 COLOR_BACKGROUNDC  = 0xFF1F1F1F; // Dark grey
 global const uint32 COLOR_LIGHTLINE    = 0xFF4A4A4A; // Light grey
-global const uint32 COLOR_VUAVG        = 0xFF00FF00; // Bright green
-global const uint32 COLOR_VUPEAK       = 0xFF009600; // Dark green
 // ============================== //
-
-// ======== VU METER ======== //
-internal float32 vuAvgL   = 0.0f;
-internal float32 vuAvgR   = 0.0f;
-internal float32 vuPeakL  = 0.0f;
-internal float32 vuPeakR  = 0.0f;
-// ========================= //
 
 #include "wav.h"
 #include "handleevents.h"
 #include "drawing.h"
 
-Sint16 *bufferl;
-Sint16 *bufferr;
-int bsize = 8192;
+View Global_View = VIEW_WAVEFORM;
+
+struct VUMeter
+{
+  uint32  COLOR_AVG  = 0x00FF00FF;
+  uint32  COLOR_PEAK = 0x009600FF;
+  float32 avgL  = 0.0f;
+  float32 avgR  = 0.0f;
+  float32 peakL = 0.0f;
+  float32 peakR = 0.0f;
+};
+
+VUMeter *createVUMeter()
+{
+  VUMeter *result = (VUMeter *)malloc(sizeof(VUMeter));
+  result->COLOR_AVG  = 0xFF00FF00;
+  result->COLOR_PEAK = 0xFF009600;
+  result->avgL  = 0.0f;
+  result->avgR  = 0.0f;
+  result->peakL = 0.0f;
+  result->peakR = 0.0f;
+  return result;
+}
 
 void AudioPostMix(void *udata, uint8 *stream, int len)
 {
-  float64 suml = 0.0;
-  float64 sumr = 0.0;
-  float64 maxl = FLT_MIN;
-  float64 maxr = FLT_MIN;
-  int x = 0;
-  int h = Window_Height / 2;
-  int startl = h - (h / 2);
-  int startr = Window_Height - (h / 2);
-  for(int i = 0; i < len; ++i)
+  float32 suml = 0.0f;
+  float32 sumr = 0.0f;
+  float32 maxl = FLT_MIN;
+  float32 maxr = FLT_MIN;
+
+  SDL_FillRect(bufferSurface, NULL, 0x00000000);
+
+  for(int i = 0, x = 0; i < len; ++i, x += 4)
   {
-    int16 l = abs((stream[i] << 8) | (stream[++i]));
-    int16 r = abs((stream[++i] << 8) | (stream[++i]));
-    float32 la = l / (float32)WAV_MAXSAMPLE;
-    float32 ra = r / (float32)WAV_MAXSAMPLE;
+    int16 l = (stream[i] << 8) | (stream[++i] & 0xFF);
+    int16 r = (stream[++i] << 8) | (stream[++i] & 0xFF);
+    int16 ll = abs(l);
+    int16 rr = abs(r);
+    float32 la = ll / (float32)WAV_MAXSAMPLE;
+    float32 ra = rr / (float32)WAV_MAXSAMPLE;
     suml += (la * la);
     sumr += (ra * ra);
-    maxl = maximum(l, maxl);
-    maxr = maximum(r, maxr);
 
-    int lll = l * (h / 2) / WAV_MAXSAMPLE;
-    int rrr = r * (h / 2) / WAV_MAXSAMPLE;
-    bufferl[x] = lll;
-    bufferr[x] = rrr;
-    ++x;
+    maxl = fminf(l, maxl);
+    maxr = fminf(r, maxr);
+
+    svlineColor(bufferSurface, x, Fourth_WH, l / Fourth_WH, 0x80FF80FF);
   }
-  maxl = (maxl * maxl) / 32768.0;
-  maxr = (maxr * maxr) / 32768.0;
+  maxl = (maxl * maxl) / WAV_MAXSAMPLE_F;
+  maxr = (maxr * maxr) / WAV_MAXSAMPLE_F;
 
   float32 rmsal = sqrt(suml / len);
   float32 rmsar = sqrt(sumr / len);
-  float32 dbal  = 20 * log10(rmsal);
-  float32 dbar  = 20 * log10(rmsar);
-  float32 rmspl = sqrt(maxl / (float32)WAV_MAXSAMPLE);
-  float32 rmspr = sqrt(maxr / (float32)WAV_MAXSAMPLE);
-  float32 dbpl  = 20 * log10(rmspl);
-  float32 dbpr  = 20 * log10(rmspr);
-  
-  #if 1
-  vuAvgL  = exp(dbal * (log(10.0f) / 20.0f));
-  vuAvgR  = exp(dbar * (log(10.0f) / 20.0f));
-  vuPeakL = exp(dbpl * (log(10.0f) / 20.0f));
-  vuPeakR = exp(dbpr * (log(10.0f) / 20.0f));
-  #endif
+  float32 dbal = 20 * log10(rmsal);
+  float32 dbar = 20 * log10(rmsar);
+  float32 rmspl = sqrt(maxl / WAV_MAXSAMPLE_F);
+  float32 rmspr = sqrt(maxr / WAV_MAXSAMPLE_F);
+  float32 dbpl = 20 * log10(rmspl);
+  float32 dbpr = 20 * log10(rmspr);
+
+  float32 vuAvgL  = exp(dbal * (log10(10.0f) / 20.0f));
+  float32 vuAvgR  = exp(dbar * (log10(10.0f) / 20.0f));
+  float32 vuPeakL = exp(dbpl * (log10(10.0f) / 20.0f));
+  float32 vuPeakR = exp(dbpr * (log10(10.0f) / 20.0f));
+
+  ((VUMeter *)udata)->avgL  = vuAvgL;
+  ((VUMeter *)udata)->avgR  = vuAvgR;
+  ((VUMeter *)udata)->peakL = vuPeakL;
+  ((VUMeter *)udata)->peakR = vuPeakR;
+
   #if 0
   // DEBUG
   if(dbal > -96 && dbar > -96)
   {
-    printf("   DB AVG | DB PEAK | VU AVG | VU PEAK | VU POW | VU DYN\n");
-    printf("L: %6.2f |%8.2f |%7.2f |%8.2f |%7.2f |%7.2f\n", dbal, dbpl, vuAvgL, vuPeakL, vuPowL, vuDynL);
-    printf("R: %6.2f |%8.2f |%7.2f |%8.2f |%7.2f |%7.2f\n", dbal, dbpl, vuAvgR, vuPeakR, vuPowR, vuDynR);
+    printf("   DB AVG | DB PEAK | VU AVG | VU PEAK\n");
+    printf("L: %6.2f |%8.2f |%7.2f |%8.2f\n", dbal, dbpl, vuAvgL, vuPeakL);
+    printf("R: %6.2f |%8.2f |%7.2f |%8.2f\n", dbal, dbpl, vuAvgR, vuPeakR);
     printf("\n");
   }
   #endif
@@ -159,8 +178,8 @@ int main(int argc, char **argv)
   // -----------------------------------------------------------------------------------------------
   // SDL_Renderer *renderer = SDL_CreateSoftwareRenderer(windowSurface);
   int rendererFlags = SDL_RENDERER_ACCELERATED;
-  // rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
-  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, rendererFlags);
+  //rendererFlags |= SDL_RENDERER_PRESENTVSYNC;
+  renderer = SDL_CreateRenderer(window, -1, rendererFlags);
 
   if(!renderer)
   {
@@ -231,7 +250,8 @@ int main(int argc, char **argv)
          audio_rate, format_str, audio_channels, bits);
   printf("End Audio\n\n");
   #endif
-  Mix_SetPostMix(AudioPostMix, renderer);
+  VUMeter *vuMeter = createVUMeter();
+  Mix_SetPostMix(AudioPostMix, vuMeter);
 
   // -----------------------------------------------------------------------------------------------
   TTF_Init();
@@ -241,7 +261,7 @@ int main(int argc, char **argv)
     printf("%s\n", TTF_GetError());
     return -1;
   }
-  TTF_Font *fontConsolas24 = TTF_OpenFont("../res/consolas.ttf", 24);
+  TTF_Font *font16 = TTF_OpenFont("../res/consolas.ttf", 16);
 
   // -----------------------------------------------------------------------------------------------
   Mix_VolumeMusic(VOLUME);
@@ -256,51 +276,68 @@ int main(int argc, char **argv)
   
   // -----------------------------------------------------------------------------------------------
   Mouse mouse;
-  int w, h;
-  SDL_QueryTexture(wavTexture, NULL, NULL, &w, &h);
-  SDL_Rect wavRect = {10, 0, Window_Width - 50, h};
+  
   const int DB = 100;
   const int zeroDB = (Window_Height - DB);
   const int boxw = 16;
-  const int leftx = Window_Width - 36;
-  const int rightx = (Window_Width - 36) + boxw + 4;
+  const int leftx = Window_Width - 100;
+  const int rightx = leftx + boxw + 4;
 
-  bufferl = (Sint16 *)calloc(bsize, sizeof(Sint16));
-  bufferr = (Sint16 *)calloc(bsize, sizeof(Sint16));
+  int w, h;
+  SDL_QueryTexture(wavTexture, NULL, NULL, &w, &h);
+  SDL_Rect wavRect = {10, 0, leftx - 20, h};
 
-  int hh = Window_Height / 2;
-  int startl = hh - (hh / 2);
-  int startr = Window_Height - (hh / 2);
+  int linex = leftx + (boxw * 2) + 5;
 
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+  SDL_Color SDL_COLOR_LIGHTGREY = { 0x4A, 0x4A, 0x4A, 0xFF };
+  SDL_Texture *sixDBText = createTextTexture(renderer, "6.0", font16, SDL_COLOR_LIGHTGREY);
+  SDL_Texture *zeroDBText = createTextTexture(renderer, "0.0", font16, SDL_COLOR_LIGHTGREY);
+  SDL_Texture *nsixDBText = createTextTexture(renderer, "-6.0", font16, SDL_COLOR_LIGHTGREY);
+  SDL_Texture *ntwelveDBText = createTextTexture(renderer, "-12.0", font16, SDL_COLOR_LIGHTGREY);
+  SDL_Texture *neighteenDBText = createTextTexture(renderer, "-18.0", font16, SDL_COLOR_LIGHTGREY);
+  SDL_Texture *ntwentyfourDBText = createTextTexture(renderer, "-24.0", font16, SDL_COLOR_LIGHTGREY);
+
+  bufferSurface = SDL_CreateRGBSurface(0, 1080, 1080, 32, 
+                                       0xFF000000,
+                                       0x00FF0000,
+                                       0x0000FF00,
+                                       0x000000FF);
+
+  SDL_Texture *bufferTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, 
+                                    SDL_TEXTUREACCESS_STREAMING, wavRect.w, wavRect.h);
 
   // -----------------------------------------------------------------------------------------------
   do
   {
-    HandleEvents(renderer, window, &mouse, music, &cursor, wavTexture, &wavRect);
-    SDL_SetRenderDrawColor(renderer, 31, 31, 31, 255);
-    SDL_RenderClear(renderer);
+    HandleEvents(renderer, window, &mouse, music, &cursor, &Global_View, wavTexture, &wavRect);
+    clear(renderer, COLOR_BACKGROUNDC);
 
-    SDL_RenderCopy(renderer, wavTexture, NULL, &wavRect);
-
-    if(bufferl[0] || bufferr[0])
+    if(Global_View == VIEW_WAVEFORM) SDL_RenderCopy(renderer, wavTexture, NULL, &wavRect);
+    else if(Global_View == VIEW_BUFFER)
     {
-      for(int i = 0; i < bsize; ++i)
-      {
-        vlineColor(renderer, i, startl, startl + bufferl[i], 0xFF64FFFF);
-        vlineColor(renderer, i, startr, startr + bufferr[i], 0xFFFFFF64);
-      }
+      SDL_UpdateTexture(bufferTexture, NULL, bufferSurface->pixels, bufferSurface->pitch);
+      SDL_RenderCopy(renderer, bufferTexture, NULL, &wavRect);
     }
 
     // ==== VU ==== //
     boxColor(renderer, leftx, 0, leftx + boxw, Window_Height, COLOR_BLACK);
     boxColor(renderer, rightx, 0, rightx + boxw, Window_Height, COLOR_BLACK);
+    hlineColor(renderer, linex, linex + 5, 0.25 * Window_Height, COLOR_LIGHTLINE);
+    drawTextToRenderer(renderer, linex + 10, 0.25 * Window_Height, "-6.0", font16, SDL_COLOR_LIGHTGREY);
+    hlineColor(renderer, linex, linex + 5, 0.5 * Window_Height,  COLOR_LIGHTLINE);
+    hlineColor(renderer, linex, linex + 5, 0.75 * Window_Height, COLOR_LIGHTLINE);
     // ==== PEAK ==== //
-    boxColor(renderer, leftx, Window_Height, leftx + boxw, Window_Height - (vuPeakL * zeroDB), COLOR_VUPEAK);
-    boxColor(renderer, rightx, Window_Height, rightx + boxw, Window_Height - (vuPeakR * zeroDB), COLOR_VUPEAK);
+    int peakL = vuMeter->peakL * zeroDB;
+    int peakR = vuMeter->peakR * zeroDB;
+    boxColor(renderer, leftx, Window_Height, leftx + boxw, Window_Height - peakL, vuMeter->COLOR_PEAK);
+    boxColor(renderer, rightx, Window_Height, rightx + boxw, Window_Height - peakR, vuMeter->COLOR_PEAK);
     // ==== AVG ==== //
-    boxColor(renderer, leftx, Window_Height, leftx + boxw, Window_Height - (vuAvgL * zeroDB), COLOR_VUAVG);
-    boxColor(renderer, rightx, Window_Height, rightx + boxw, Window_Height - (vuAvgR * zeroDB), COLOR_VUAVG);
+    int avgL = vuMeter->avgL * zeroDB;
+    int avgR = vuMeter->avgR * zeroDB;
+    boxColor(renderer, leftx, Window_Height, leftx + boxw, Window_Height - avgL, vuMeter->COLOR_AVG);
+    boxColor(renderer, rightx, Window_Height, rightx + boxw, Window_Height - avgR, vuMeter->COLOR_AVG);
     
     hlineColor(renderer, leftx, leftx + boxw, DB, COLOR_LIGHTLINE);
     hlineColor(renderer, rightx, rightx + boxw, DB, COLOR_LIGHTLINE);
@@ -314,8 +351,10 @@ int main(int argc, char **argv)
   } while(Global_running);
   // -----------------------------------------------------------------------------------------------
 
+  free(vuMeter);
+
   IMG_Quit();
-  TTF_CloseFont(fontConsolas24);
+  TTF_CloseFont(font16);
   Mix_CloseAudio();
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);

@@ -19,8 +19,10 @@
 const uint32 COLOR_LEFTCHANNEL  = 0xFF80FF80; // Light green
 const uint32 COLOR_RIGHTCHANNEL = 0xFF8080FF; // Light red
 
-const int16 WAV_MAXSAMPLE = SHRT_MAX;
-const int16 WAV_MINSAMPLE = SHRT_MIN;
+const int16   WAV_MAXSAMPLE   = SHRT_MAX;
+const int16   WAV_MINSAMPLE   = SHRT_MIN;
+const float32 WAV_MAXSAMPLE_F = 32767.0f;
+const float32 WAV_MINSAMPLE_F = -32768.0f;
 
 struct WAVFile
 {
@@ -47,7 +49,7 @@ struct WAVFile
   uint64   numFrames;
   float64  duration;
   // DATA
-  int32   *data;
+  int32 *data;
 };
 
 #if 1
@@ -55,8 +57,10 @@ struct WAVFile
 SDL_Surface *WAV_createSurface(WAVFile wav, int height)
 {
   int h = height / 2;
-  int slices = 1024;
+  int slices = Window_Width;
   int chunks = wav.numFrames / slices;
+
+  printf("Chunks: %d\n", chunks);
 
   SDL_Surface *surface = SDL_CreateRGBSurface(0, chunks, height, 32,
                                               0xFF000000,
@@ -166,7 +170,7 @@ SDL_Texture *WAV_createTexture(SDL_Renderer *renderer, WAVFile wav, int height)
   int ipos = (int) (pos - hms);
   char decimalpart[15];
   memset(decimalpart, ' ', sizeof(decimalpart));
-  strncpy(decimalpart, &hms[ipos+1], 3);
+  strncpy_s(decimalpart, &hms[ipos+1], 3);
   milliseconds = atoi(decimalpart);
   
   sprintf(hms, "%d:%02d:%02d.%d", hours, minutes, seconds, milliseconds);
@@ -195,7 +199,7 @@ void printWAVFile(WAVFile wav)
   printf("  Bits per sample: %d\n", wav.bitsPerSample);
   printf("  Number of samples: %d\n", wav.numSamples);
   printf("  Duration in seconds: %.4f\n", wav.duration);
-  printf("  Duration in time: %s\n", seconds_to_time);
+  printf("  Duration in time: %s\n", seconds_to_time(wav.duration));
   printf(">\n\n");
 }
 

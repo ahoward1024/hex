@@ -1,6 +1,12 @@
 #ifndef HANDLEEVENTS_H
 #define HANDLEEVENTS_H
 
+enum View
+{
+  VIEW_WAVEFORM,
+  VIEW_BUFFER
+};
+
 static const SDL_Point MOUSERESET = { INT_MIN, INT_MIN };
 
 struct Mouse
@@ -19,7 +25,7 @@ bool mouseDown = false;
 bool inrect = false;
 
 void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_Music *music, 
-                  float32 *cursor, SDL_Texture *wavTexture, SDL_Rect *wavRect)
+                  float32 *cursor, View *view, SDL_Texture *wavTexture, SDL_Rect *wavRect)
 {
   SDL_GetMouseState(&mouse->x, &mouse->y);
   SDL_Event event;
@@ -118,7 +124,17 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
             }
             else
             {
-              Mix_PauseMusic();
+              if(!Mix_PlayingMusic())
+              {
+                if(Mix_PlayMusic(music, -1) == -1)
+                {
+                  printf("Could not play music.\n");
+                }
+              }
+              else
+              {
+                Mix_PauseMusic();
+              }
             }
           } break;
           case SDLK_a:
@@ -126,6 +142,8 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           } break;
           case SDLK_b:
           {
+            if(*view == VIEW_WAVEFORM) *view = VIEW_BUFFER;
+            else *view = VIEW_WAVEFORM;
           } break;
           case SDLK_c:
           {
@@ -187,6 +205,7 @@ void HandleEvents(SDL_Renderer *renderer, SDL_Window *window, Mouse *mouse, Mix_
           case SDLK_v:
           {
             Mix_HaltMusic();
+            Global_paused = true;
             *cursor = 10.0f;
           } break;
           case SDLK_w:

@@ -158,4 +158,37 @@ int colorClampInt(int value)
   else return value;
 }
 
+uint32 randomColor()
+{
+  uint8  r = rand() % 256;
+  uint8  g = rand() % 256;
+  uint8  b = rand() % 256;
+  uint8  a = 0xFF;
+  return (r << 24)|(g << 16)|(b << 8)|(a << 0);
+}
+
+uint32 randomColor(int i)
+{
+  uint8  r = 0xFF;
+  uint8  g = 0xFF;
+  uint8  b = 0xFF;
+  uint8  a = 0xFF;
+  if(i == 0)
+  {
+    g = rand() % 256;
+    b = rand() % 256;
+  }
+  else if(i == 1)
+  {
+    r = rand() % 256;
+    b = rand() % 256;
+  }
+  else if(i == 2)
+  {
+    r = rand() % 256;
+    g = rand() % 256;
+  }
+  return (r << 24)|(g << 16)|(b << 8)|(a << 0);
+}
+
 #endif

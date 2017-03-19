@@ -4,12 +4,104 @@
 		"selected_items":
 		[
 			[
-				"Win",
+				"Fo",
+				"Fourth_WH"
+			],
+			[
+				"WAV",
+				"WAV_MAXSAMPLE"
+			],
+			[
+				"buffer",
+				"bufferSurface"
+			],
+			[
+				"WA",
+				"WAV_MAXSAMPLE"
+			],
+			[
+				"W",
 				"Window_Height"
 			],
 			[
+				"Glo",
+				"Global_AudioStream"
+			],
+			[
+				"GLobla",
+				"Global_AudioStream"
+			],
+			[
+				"uint",
+				"uint8"
+			],
+			[
+				"SDL_Se",
+				"SDL_SetRenderDrawColor"
+			],
+			[
+				"Wa",
+				"WAV_MAXSAMPLE"
+			],
+			[
+				"VIW",
+				"VIEW_BUFFER"
+			],
+			[
+				"VIEW",
+				"VIEW_BUFFER"
+			],
+			[
+				"VIEW_",
+				"VIEW_BUFFER"
+			],
+			[
+				"Global",
+				"Global_View"
+			],
+			[
+				"Glob",
+				"Global_View"
+			],
+			[
+				"oe",
+				"WAV_openFile"
+			],
+			[
 				"Window",
+				"Window_Height"
+			],
+			[
+				"Win",
 				"Window_Width"
+			],
+			[
+				"0x",
+				"0xFF4A4A4A"
+			],
+			[
+				"VUMeter",
+				"VUMeter"
+			],
+			[
+				"WAV_MA",
+				"WAV_MAXSAMPLE_F"
+			],
+			[
+				"WAB",
+				"WAVBuffer"
+			],
+			[
+				"WAV_",
+				"WAV_MAXSAMPLE"
+			],
+			[
+				"SHRT",
+				"SHRT_MAX"
+			],
+			[
+				"file",
+				"musicFileName"
 			],
 			[
 				"Windo",
@@ -28,16 +120,8 @@
 				"0xFF8080FF"
 			],
 			[
-				"SHRT",
-				"SHRT_MAX"
-			],
-			[
 				"WIndo",
 				"Window_Height"
-			],
-			[
-				"W",
-				"Window_Width"
 			],
 			[
 				"maxSa",
@@ -184,10 +268,6 @@
 				"SDL_INIT_AUDIO"
 			],
 			[
-				"Global",
-				"Global_running"
-			],
-			[
 				"Mix_P",
 				"Mix_PauseMusic"
 			],
@@ -306,10 +386,6 @@
 			[
 				"next",
 				"nextHexSide"
-			],
-			[
-				"uint",
-				"uint32"
 			],
 			[
 				"SDL_Render",
@@ -438,82 +514,6 @@
 			[
 				"layout",
 				"layoutWindowElements"
-			],
-			[
-				"Global_video",
-				"Global_videoClip"
-			],
-			[
-				"free",
-				"freeVideoClip"
-			],
-			[
-				"curre",
-				"currentTime"
-			],
-			[
-				"anime",
-				"anime404mp4"
-			],
-			[
-				"an",
-				"anime404webm"
-			],
-			[
-				"av_f",
-				"av_frame_free"
-			],
-			[
-				"avfram",
-				"av_frame_alloc"
-			],
-			[
-				"av_fra",
-				"av_frame_alloc"
-			],
-			[
-				"parent",
-				"parentKeyframe"
-			],
-			[
-				"AV_",
-				"AV_PICTURE_TYPE_NONE"
-			],
-			[
-				"ani",
-				"anime404AME"
-			],
-			[
-				"a",
-				"a404test"
-			],
-			[
-				"seekT",
-				"seekToOnlyKeyframes"
-			],
-			[
-				"wan",
-				"wantedFrame"
-			],
-			[
-				"wa",
-				"wantedIndex"
-			],
-			[
-				"AVSEE",
-				"AVSEEK_FLAG_BACKWARD"
-			],
-			[
-				"total",
-				"totalFrames"
-			],
-			[
-				"pts",
-				"ptsList"
-			],
-			[
-				"ptsL",
-				"ptsListSorted"
 			]
 		]
 	},
@@ -540,7 +540,7 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 260.0,
+		"height": 375.0,
 		"last_filter": "open",
 		"selected_items":
 		[
@@ -593,6 +593,14 @@
 	},
 	"file_history":
 	[
+		"/E/Code/C/hex/drawing.h",
+		"/E/Code/C/hex/inc/colors.h",
+		"/E/Code/C/hex/inc/SDL2/SDL_main.h",
+		"/C/Program Files (x86)/Windows Kits/10/include/10.0.10240.0/ucrt/string.h",
+		"/E/Code/C/hex/resource.h",
+		"/E/Code/C/hex/res/.wav",
+		"/E/Code/C/hex/wav.h",
+		"/E/Code/C/hex/wave.h",
 		"/E/Programs/sublimetext/Data/Packages/C++/C.sublime-syntax",
 		"/E/Code/C/hex/C++/C.sublime-syntax",
 		"/E/Programs/sublimetext/Data/Packages/C++/C++.sublime-syntax",
@@ -603,10 +611,8 @@
 		"/e/code/c/hex/inc/sdl2/sdl_spriginline.h",
 		"/e/code/c/hex/wave.h",
 		"/E/Code/C/hex/inc/xtrace.h",
-		"/E/Code/C/hex/drawing.h",
 		"/E/Programs/sublimetext/Data/Packages/User/Default (Windows).sublime-keymap",
 		"/E/Code/C/hex/res/test.wav",
-		"/E/Code/C/hex/wave.h",
 		"/E/Code/C/hex/audio.h",
 		"/E/Code/C/hex/handleevents.h",
 		"/E/Code/C/hex/res/hex.ico",
@@ -683,7 +689,7 @@
 	],
 	"find":
 	{
-		"height": 21.0
+		"height": 36.0
 	},
 	"find_in_files":
 	{
@@ -698,6 +704,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"free",
+			"wav->",
+			"wav.",
 			"settings",
 			"SPG_Point",
 			"XTRACE",
@@ -764,6 +773,8 @@
 		"regex": false,
 		"replace_history":
 		[
+			"wav.",
+			"wav->",
 			"Settings",
 			"point",
 			"",
@@ -825,8 +836,8 @@
 		"cols":
 		[
 			0.0,
-			0.215546875,
-			0.610390625,
+			0.178828125,
+			0.589296875,
 			1.0
 		],
 		"rows":
@@ -861,28 +872,68 @@
 		"selected_items":
 		[
 			[
-				"wav",
-				"wave.h"
+				"color",
+				"inc\\colors.h"
 			],
 			[
 				"draw",
 				"drawing.h"
 			],
 			[
-				"audi",
-				"audio.h"
-			],
-			[
-				"hand",
-				"handleevents.h"
+				"wav",
+				"wav.h"
 			],
 			[
 				"hex",
 				"hex.cpp"
 			],
 			[
+				"hand",
+				"handleevents.h"
+			],
+			[
+				"buil",
+				"build.bat"
+			],
+			[
+				"main",
+				"inc\\SDL2\\SDL_main.h"
+			],
+			[
+				"dra",
+				"drawing.h"
+			],
+			[
+				"handl",
+				"handleevents.h"
+			],
+			[
+				"wa",
+				"wav.h"
+			],
+			[
+				"res",
+				"resource.h"
+			],
+			[
+				"h",
+				"hex.cpp"
+			],
+			[
+				"bui",
+				"build.bat"
+			],
+			[
 				"he",
 				"hex.cpp"
+			],
+			[
+				".wav",
+				"res\\.wav"
+			],
+			[
+				"audi",
+				"audio.h"
 			],
 			[
 				"ha",
@@ -890,14 +941,6 @@
 			],
 			[
 				"bu",
-				"build.bat"
-			],
-			[
-				"bui",
-				"build.bat"
-			],
-			[
-				"buil",
 				"build.bat"
 			],
 			[
@@ -937,28 +980,12 @@
 				"audio.h"
 			],
 			[
-				"wa",
-				"wave.h"
-			],
-			[
 				"aui",
 				"audio.h"
 			],
 			[
-				"color",
-				"inc\\colors.h"
-			],
-			[
 				"han",
 				"handleevents.h"
-			],
-			[
-				"dra",
-				"drawing.h"
-			],
-			[
-				"h",
-				"hex.cpp"
 			],
 			[
 				"colo",
@@ -979,10 +1006,6 @@
 			[
 				"colors",
 				"inc\\colors.h"
-			],
-			[
-				"main",
-				"inc\\SDL\\SDL_main.h"
 			],
 			[
 				"data",

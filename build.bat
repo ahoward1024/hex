@@ -3,7 +3,7 @@
 REM /F2147483648
 set cmp=/Zi /FC
 set inc=-I..\inc
-set lnk=/SUBSYSTEM:WINDOWS ..\lib\*.lib
+set lnk=/SUBSYSTEM:CONSOLE ..\lib\*.lib ..\hex.res
 
 IF NOT EXIST bin\ mkdir bin\
 pushd bin\

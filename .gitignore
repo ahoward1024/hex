@@ -13,5 +13,12 @@
 *.obj
 *.opendb
 *.db
-\.vs
-\Debug
+.vs/
+Debug/
+
+# My nonsense
+*.sublime-project
+*.sublime-workspace
+
+# Resource stuff
+res/large/
