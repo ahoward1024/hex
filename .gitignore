@@ -17,7 +17,6 @@
 Debug/
 
 # My nonsense
-*.sublime-project
 *.sublime-workspace
 
 # Resource stuff
